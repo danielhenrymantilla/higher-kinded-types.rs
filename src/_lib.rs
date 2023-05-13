@@ -122,7 +122,7 @@ crate::utils::cfg_match! {
         /// [HKT]: trait@HKT
         ///
         /// When trying to teach the notion of a HKT / "generic generic" to
-        /// somebody that has never run into it, _e.g._, in introductory
+        /// somebody who has never run into it, _e.g._, in introductory
         /// documentation, blog posts, _etc._, the <code>: [ᐸᑊ_ᐳ]</code>
         /// syntax ought to be more _intuitive_:
         ///
