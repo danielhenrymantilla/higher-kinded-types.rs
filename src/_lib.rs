@@ -21,7 +21,6 @@ mod prelude {
         HKT,
         HktRef,
         HktMut,
-        hkt_macro::*,
     };
 }
 
@@ -63,6 +62,7 @@ use {
 mod fn_traits;
 
 #[allow(unused_imports)]
+#[doc(hidden)]
 pub use hkt_macro::*;
 mod hkt_macro;
 
