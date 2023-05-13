@@ -19,23 +19,20 @@ readme = "README.md"
 # keywords = []
 
 [features]
+"docs.rs" = [
+    "better-docs",
+]
 better-docs = [  # allowed to break MSRV
-    "dep:macro_pub",
 ]
 ui-tests = ["better-docs"]
 
 default = [
+    # "fn_traits",
 ]
 
-"docs.rs" = [
-    "better-docs",
-]
+fn_traits = []
 
 [dependencies]
-macro_pub.version = "0.1.0"
-macro_pub.optional = true
-
-macro_rules_attribute.version = "0.2.0"
 
 [dev-dependencies]
 

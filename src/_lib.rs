@@ -1,40 +1,75 @@
 #![doc = include_str!("../README.md")]
 #![no_std]
 #![forbid(unsafe_code)]
-#![allow(uncommon_codepoints)]
-#![cfg_attr(feature = "better-docs", feature(decl_macro, rustc_attrs, trait_alias))]
+#![allow(type_alias_bounds, uncommon_codepoints)]
+#![allow(
+    // in case `crate::HKT!` does not resolve, we have the `crate::hkt_macro::*` fallback.
+    macro_expanded_macro_exports_accessed_by_absolute_paths,
+)]
+#![cfg_attr(feature = "better-docs",
+    feature(decl_macro, rustc_attrs, trait_alias),
+)]
+#![cfg_attr(feature = "fn_traits",
+    feature(unboxed_closures),
+)]
 
-#[cfg(COMMENTED_OUT)] // <- Remove this when used!
 /// The crate's prelude.
 pub
 mod prelude {
-    // …
+    #[doc(no_inline)]
+    pub use crate::{
+        HKT,
+        HktRef,
+        HktMut,
+        hkt_macro::*,
+    };
 }
 
 // macro internals
 #[doc(hidden)] /** Not part of the public API */ pub
 mod ඞ {
-    pub use ::core; // or `std`
+    pub use {
+        ::core, // or `std`
+        crate::{
+            with_lifetime::{
+                WithLifetime,
+            },
+        },
+    };
+    #[cfg(feature = "fn_traits")]
+    pub use {
+        crate::{
+            fn_traits::{
+                Input as For,
+                Input as __,
+            },
+        },
+    };
+
+    /// Do not use this type!
+    pub
+    struct PhantomData<T : ?Sized>(
+        ::core::marker::PhantomData<T>,
+    );
 }
 
-#[doc = include_str!("compile_fail_tests.md")]
-mod _compile_fail_tests {}
-
 use {
-    ::core::{
-        ops::Not as _,
+    crate::{
+        with_lifetime::WithLifetime,
     },
 };
 
-#[macro_use]
-extern crate macro_rules_attribute;
+#[cfg(feature = "fn_traits")]
+mod fn_traits;
 
-use with_lifetime::WithLifetime;
+#[allow(unused_imports)]
+pub use hkt_macro::*;
+mod hkt_macro;
+
+mod hkt_muncher;
 
 mod utils;
 
-#[doc(hidden)] /** Not part of the publidc API */
-pub
 mod with_lifetime {
     pub
     trait WithLifetime<'lt> : Send + Sync + Unpin {
@@ -44,16 +79,10 @@ mod with_lifetime {
     impl<'lt, T : ?Sized + WithLifetime<'lt>>
         WithLifetime<'lt>
     for
-        ::core::marker::PhantomData<T>
+        crate::ඞ::PhantomData<T>
     {
         type T = T::T;
     }
-
-    // /// <code>[Feed]\<\'lt, T\></code> is sugar for
-    // /// <code>\<T as [WithLifetime]\<\'lt\>::T</code>
-    // #[allow(type_alias_bounds)]
-    // pub
-    // type Feed<'lt, T : ?Sized + WithLifetime<'lt>> = T::T;
 }
 
 pub
@@ -62,10 +91,17 @@ where
     Self : for<'any> WithLifetime<'any>,
 {
     /// "Instantiate lifetime" / "apply/feed lifetime" operation:
-    ///   - given a <code>\<T : [HKT]\></code>,
-    ///     `T::__<'lt>` will represent, conceptually, the `T<'lt>` type.
-    ///   - given a <code>\<T : [ᐸᛌ_ᐳ]\></code>,
-    ///     `T::__<'lt>` will represent, conceptually, the `T<'lt>` type.
+    ///   - Given <code>\<T : [HKT]\></code>,
+    ///
+    ///     `T::__<'lt>` stands for the conceptual `T<'lt>` type.
+    ///
+    ///   - Pseudo-code syntax:
+    ///     <details      class="custom"><summary><span class="summary-box"><span>Click to hide</span></span></summary>
+    ///
+    ///     given <code>\<T : [ᐸᑊ_ᐳ]\></code>,
+    ///
+    ///     `T::__<'lt>` stands for the conceptual `T<'lt>` type.
+    ///     </details>
     ///
     /// [HKT]: trait@HKT
     type __<'lt>;
@@ -78,48 +114,56 @@ where
     type __<'lt> = <Self as WithLifetime<'lt>>::T;
 }
 
-#[macro_export]
-macro_rules! HKT {
-    (
-        <$lt:lifetime> = $T:ty $(,)?
-    ) => (
-        $crate::with_lifetime::HKT<
-            dyn for<$lt> $crate::with_lifetime::WithLifetime<$lt, T = $T>,
-        >
-    );
-
-    (
-        $T:ty $(,)?
-    ) => (
-        $crate::HKT!(<'__> = $T)
-    );
-}
-
 crate::utils::cfg_match! {
     feature = "better-docs" => (
-        /// Not necessarily intended for real code, just for code snippets in
-        /// documentation, blog posts that will try to mimic language syntax using
-        /// unicode look-alikes, to hopefully more easily share the useful intuition
-        /// of HKT / "generic generics" semantics.
+        /// <code>: [ᐸᑊ_ᐳ]</code> is a hopefully illustrative syntax that
+        /// serves as an alias for <code>: [HKT]</code>.
+        ///
+        /// [HKT]: trait@HKT
+        ///
+        /// When trying to teach the notion of a HKT / "generic generic" to
+        /// somebody that has never run into it, _e.g._, in introductory
+        /// documentation, blog posts, _etc._, the <code>: [ᐸᑊ_ᐳ]</code>
+        /// syntax ought to be more _intuitive_:
+        ///
+        ///   - (the idea being that `: ᐸᑊ_ᐳ` looks quite a bit like `: <'_>`).
         ///
         /// ```rust
         /// use ::higher_kinded_types::*;
         ///
-        /// struct Example<'a, 'b, T : ᐸᛌ_ᐳ> {
+        /// struct Example<'a, 'b, T : ᐸᑊ_ᐳ> {
         ///     a: T::__<'a>,
         ///     b: T::__<'b>,
         /// }
         /// ```
-        pub trait ᐸᛌ_ᐳ = HKT;
+        ///
+        ///   - ⚠️ real code should nonetheless be using the <code>: [HKT]</code>
+        ///     syntax: ASCII characters are easier to type with a standard
+        ///     keyboard layout, contrary to `ᐸᑊ_ᐳ`, which will probably require
+        ///     copy-pasting.
+        pub trait ᐸᑊ_ᐳ = HKT;
     );
 
     _ => (
         mod r#trait {
+            #![allow(unused)]
             pub use super::*;
             macro_rules! __ {() => ()}
             use __ as HKT;
         }
 
-        pub use r#trait::HKT as ᐸᛌ_ᐳ;
+        pub use r#trait::HKT as ᐸᑊ_ᐳ;
     );
 }
+
+/// Shorthand alias for <code>[HKT!]\(\<\'any\> = \&\'any T\)</code>.
+pub
+type HktRef<T : ?Sized> = HKT!(<'any> = &'any T);
+
+/// Shorthand alias for <code>[HKT!]\(\<\'any\> = \&\'any mut T\)</code>.
+pub
+type HktMut<T : ?Sized> = HKT!(&'_ mut T);
+
+#[cfg(feature = "ui-tests")]
+#[doc = include_str!("compile_fail_tests.md")]
+mod _compile_fail_tests {}
