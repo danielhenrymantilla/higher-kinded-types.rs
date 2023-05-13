@@ -20,6 +20,7 @@ readme = "README.md"
 
 [features]
 better-docs = [  # allowed to break MSRV
+    "dep:macro_pub",
 ]
 ui-tests = ["better-docs"]
 
@@ -31,6 +32,10 @@ default = [
 ]
 
 [dependencies]
+macro_pub.version = "0.1.0"
+macro_pub.optional = true
+
+macro_rules_attribute.version = "0.2.0"
 
 [dev-dependencies]
 
