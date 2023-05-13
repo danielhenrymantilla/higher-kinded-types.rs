@@ -1,0 +1,50 @@
+# Templated by `cargo-generate` using https://github.com/danielhenrymantilla/proc-macro-template
+[lib]
+path = "src/_lib.rs"
+
+[package]
+name = "higher-kinded-types"
+authors = [
+    "Daniel Henry-Mantilla <daniel.henry.mantilla@gmail.com>",
+]
+version = "0.1.0-rc1"  # Keep in sync
+edition = "2021"
+
+license = "Zlib OR MIT OR Apache-2.0"
+repository = "https://github.com/danielhenrymantilla/higher-kinded-types.rs"
+documentation = "https://docs.rs/higher-kinded-types"
+readme = "README.md"
+
+# description = "…"
+# keywords = []
+
+[features]
+better-docs = [  # allowed to break MSRV
+]
+ui-tests = ["better-docs"]
+
+default = [
+]
+
+"docs.rs" = [
+    "better-docs",
+]
+
+[dependencies]
+
+[dev-dependencies]
+
+[workspace]
+
+[package.metadata.docs.rs]
+features = ["docs.rs"]
+rustdoc-args = [
+    # Use (with or without `open`):
+    # ```md
+    # <details open class="custom"><summary><span class="summary-box"><span>Click to hide</span></span></summary>
+    # …
+    # </details>
+    # ```
+    # to get nice drop-down menus (and avoid the css bug with rustdoc).
+    "--html-before-content", "fix-docsrs-li-details-summary.html",
+]
