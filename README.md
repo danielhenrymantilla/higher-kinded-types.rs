@@ -1,5 +1,7 @@
 # `::higher-kinded-types`
 
+"Generic generics" / higher-kinded APIs in stable Rust.
+
 [![Repository](https://img.shields.io/badge/repository-GitHub-brightgreen.svg)](
 https://github.com/danielhenrymantilla/higher-kinded-types.rs)
 [![Latest version](https://img.shields.io/crates/v/higher-kinded-types.svg)](
@@ -14,5 +16,9 @@ https://github.com/rust-secure-code/safety-dance/)
 https://github.com/danielhenrymantilla/higher-kinded-types.rs/blob/master/LICENSE-ZLIB)
 [![CI](https://github.com/danielhenrymantilla/higher-kinded-types.rs/workflows/CI/badge.svg)](
 https://github.com/danielhenrymantilla/higher-kinded-types.rs/actions)
+
+See the documentation of the [HKT] trait for more info.
+
+[HKT]: https://docs.rs/higher-kinded-types/0.1.0-rc1/higher-kinded-types/trait.HKT.html
 
 <!-- Templated by `cargo-generate` using https://github.com/danielhenrymantilla/proc-macro-template -->

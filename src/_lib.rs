@@ -1,3 +1,4 @@
+//! [HKT]: trait@HKT
 #![doc = include_str!("../README.md")]
 #![no_std]
 #![forbid(unsafe_code)]
@@ -347,7 +348,7 @@ mod with_lifetime {
 ///
 /// Finally, another observation which I find interesting, is that:
 ///
-/// ```rs
+/// ```rust
 /// use ::higher_kinded_types::HKT;
 ///
 /// type A = HKT!(<'r> = &'r str);
@@ -449,7 +450,7 @@ crate::utils::cfg_match! {
 
 /// Shorthand alias for <code>[HKT!]\(\<\'any\> = \&\'any T\)</code>.
 pub
-type HktRef<T : ?Sized> = HKT!(<'any> = &'any T);
+type HktRef<T : ?Sized> = HKT!(&'_ T);
 
 /// Shorthand alias for <code>[HKT!]\(\<\'any\> = \&\'any mut T\)</code>.
 pub
