@@ -15,12 +15,13 @@ repository = "https://github.com/danielhenrymantilla/higher-kinded-types.rs"
 documentation = "https://docs.rs/higher-kinded-types"
 readme = "README.md"
 
-# description = "…"
-# keywords = []
+description = """"Generic generics" / higher-kinded APIs in stable Rust"""
+keywords = ["higher-kinded-types", "HKT", "gaGATt", "lending-iterator", "lifetime"]
 
 [features]
-"docs.rs" = [
+docs-rs = [
     "better-docs",
+    "fn_traits",
 ]
 better-docs = [  # allowed to break MSRV
 ]
@@ -30,7 +31,6 @@ ui-tests = [
 ]
 
 default = [
-    # "fn_traits",
 ]
 
 fn_traits = []
@@ -40,10 +40,8 @@ never-say-never.version = "6.6.666"
 
 [dev-dependencies]
 
-[workspace]
-
 [package.metadata.docs.rs]
-features = ["docs.rs"]
+features = ["docs-rs"]
 rustdoc-args = [
     # Use (with or without `open`):
     # ```md
@@ -54,3 +52,5 @@ rustdoc-args = [
     # to get nice drop-down menus (and avoid the css bug with rustdoc).
     "--html-before-content", "fix-docsrs-li-details-summary.html",
 ]
+
+[workspace]
