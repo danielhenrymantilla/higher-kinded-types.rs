@@ -1,20 +1,20 @@
 crate::utils::cfg_match! {
     feature = "fn_traits" => (
         dispatch! {$
-            fn_traits = yes
+            fn_traits = true
         }
     );
     _ => (
         dispatch! {$
-            fn_traits = no
+            fn_traits = false
         }
     );
 }
 
 macro_rules! dispatch {($_:tt
     fn_traits =
-        $(yes $($if_cfg_fn_traits:tt)?)?
-        $(no $($if_not_cfg_fn_traits:tt)?)?
+        $(true $($if_cfg_fn_traits:tt)?)?
+        $(false $($if_not_cfg_fn_traits:tt)?)?
 ) => (
     /// ```rust
     /// use ::higher_kinded_types::*;
@@ -58,7 +58,7 @@ macro_rules! dispatch {($_:tt
         ) => (
             $($($if_cfg_fn_traits)?
                 $_ crate::ඞ::PhantomData<
-                    fn($_ crate::ඞ::For<'_>) -> $_($input)*
+                    fn($_ crate::ඞ::r#for<'_>) -> $_($input)*
                 >
             )?
             $($($if_not_cfg_fn_traits)?

@@ -39,7 +39,7 @@ mod ඞ {
     pub use {
         crate::{
             fn_traits::{
-                Input as For,
+                Input as r#for,
                 Input as __,
             },
         },
@@ -85,10 +85,117 @@ mod with_lifetime {
     }
 }
 
+/// The main trait of the crate. The one expressing the `: <'_>`-genericity of a
+/// itself generic type ("generic generic").
+///
+/// [HKT]: trait@HKT
+///
+/// It is not to be manually implemented: the only types implementing this trait
+/// are the ones produced by the [`HKT!`] macro.
+///
+/// # Usage
+///
+///  1. Make your API take a generic `<T : HKT>` parameter.
+///
+///     Congratulations, you now[^1] have a _higher-kinded_ API: your API is
+///     not only generic, but it is also taking a parameter which is, in and of
+///     itself, generic.
+///
+///  1. Callers: call sites use the [`HKT!`] macro to produce a type which they
+///     can _and must_ turbofish to such APIs. For instance:
+///
+///       - <code>[HKT!]\(&str\)</code> for the pervasive reference case
+///         (which could also use <code>[HktRef]\<str\></code> to avoid the
+///         macro),
+///
+///         or <code>[HKT!]\(Cow\<\'_, str\>\)</code> for more complex
+///         lifetime-infected types;
+///
+///       - <code>[HKT!]\(u8\)</code> or other owned types work too: it is not
+///         mandatory, at the call-site, to be lifetime-infected, it is just
+///         _possible_ (maximally flexible API).
+///
+///  1. Callee/API author: make use of this nested genericity in your API!
+///
+///     Feed, somewhere, a lifetime parameter to this `T`:
+///
+///     ```rs
+///     # #[cfg(any())] macro_rules! ignore {
+///     T::__<'some_lifetime_param>
+///     # }
+///     ```
+///
+///     There are two situations where this is handy:
+///
+///       - wanting to feed two different lifetimes to `T`:
+///
+///          ```rust
+///          use ::higher_kinded_types::prelude::*;
+///
+///          struct Example<'a, 'b, T : HKT> {
+///              a: T::__<'a>,
+///              b: T::__<'b>,
+///          }
+///          ```
+///
+///       - wanting to "feed a lifetime later" / to feed a
+///         `for<>`-quantified lifetime to your <code>impl [HKT]</code> type:
+///
+///          ```rust
+///          # #[cfg(any())] macro_rules! ignore {
+///          use ::higher_kinded_types::{prelude::*, ᐸᑊ_ᐳ};
+///
+///          fn slice_sort_by_key<Item, Key : ᐸᑊ_ᐳ> (
+///              items: &'_ mut [Item],
+///              mut get_key: impl for<'it> FnMut(&'it Item) -> Key::__<'it>,
+///          )
+///          # }
+///          ```
+///
+///          Full example:
+///
+///          <details class="custom"><summary><span class="summary-box"><span>Click to show</span></span></summary>
+///
+///          ```rust
+///          use ::higher_kinded_types::prelude::*;
+///
+///          fn slice_sort_by_key<Item, Key : HKT> (
+///              items: &'_ mut [Item],
+///              mut get_key: impl for<'it> FnMut(&'it Item) -> Key::__<'it>,
+///          )
+///          where
+///              for<'it> Key::__<'it> : Ord,
+///          {
+///              items.sort_by(|a: &'_ Item, b: &'_ Item| <Key::__<'_>>::cmp(
+///                  &get_key(a),
+///                  &get_key(b),
+///              ))
+///          }
+///
+///          // Demo:
+///          let clients: &mut [Client] = // …;
+///          # &mut []; struct Client { key: String, version: u8 }
+///
+///          slice_sort_by_key::<_, HKT!(&str)>(clients, |c| &c.key); // ✅
+///
+///          // Important: owned case works too!
+///          slice_sort_by_key::<_, HKT!(u8)>(clients, |c| c.version); // ✅
+///
+///          # #[cfg(any())] {
+///          // But the classic `sort_by_key` stdlib API fails, since it does not use HKTs:
+///          clients.sort_by_key(|c| &c.key); // ❌ Error: cannot infer an appropriate lifetime for autoref due to conflicting requirements
+///          # }
+///          ```
+///
+///          </details>
+///
+/// [^1]: The bound `T : HKT` is kind of an abuse of terminology: `T` itself is
+/// not higher-kinded, the generic API taking `<T : HKT>` is, if we want to be
+/// pedantic.
 pub
-trait HKT
-where
-    Self : for<'any> WithLifetime<'any>,
+trait HKT : Send + Sync + Unpin + seal::Sealed
+// where
+//     Self : for<'any> WithLifetime<'any>,
 {
     /// "Instantiate lifetime" / "apply/feed lifetime" operation:
     ///   - Given <code>\<T : [HKT]\></code>,
@@ -107,9 +214,16 @@ where
     type __<'lt>;
 }
 
+mod seal {
+    pub trait Sealed {}
+    impl<T> Sealed for crate::ඞ::PhantomData<T> {}
+}
+
+// impl seal::Sealed for
+#[doc(hidden)]
 impl<T : ?Sized> HKT for T
 where
-    Self : for<'any> WithLifetime<'any>,
+    Self : for<'any> WithLifetime<'any> + seal::Sealed,
 {
     type __<'lt> = <Self as WithLifetime<'lt>>::T;
 }

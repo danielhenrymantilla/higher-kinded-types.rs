@@ -24,7 +24,10 @@ readme = "README.md"
 ]
 better-docs = [  # allowed to break MSRV
 ]
-ui-tests = ["better-docs"]
+ui-tests = [
+    "better-docs",
+    "fn_traits",
+]
 
 default = [
     # "fn_traits",
