@@ -36,6 +36,7 @@ default = [
 fn_traits = []
 
 [dependencies]
+never-say-never.version = "6.6.666"
 
 [dev-dependencies]
 

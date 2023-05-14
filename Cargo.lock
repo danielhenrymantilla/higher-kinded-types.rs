@@ -5,3 +5,12 @@ version = 3
 [[package]]
 name = "higher-kinded-types"
 version = "0.1.0-rc1"
+dependencies = [
+ "never-say-never",
+]
+
+[[package]]
+name = "never-say-never"
+version = "6.6.666"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cf5a574dadd7941adeaa71823ecba5e28331b8313fb2e1c6a5c7e5981ea53ad6"

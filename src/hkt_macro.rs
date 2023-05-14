@@ -16,6 +16,38 @@ macro_rules! dispatch {($_:tt
         $(true $($if_cfg_fn_traits:tt)?)?
         $(false $($if_not_cfg_fn_traits:tt)?)?
 ) => (
+    /// Produce <code>impl [HKT]</code> types _on demand_.
+    ///
+    /// [HKT]: trait@crate::HKT
+    ///
+    /// ### Syntax
+    ///
+    ///   - #### Full syntax
+    ///
+    ///     ```rust
+    ///     # use ::higher_kinded_types::HKT;
+    ///     # mod some { pub use ::std::borrow::Cow as Arbitrary; }
+    ///     # use str as Type; let _:
+    ///     HKT!(<'r> = some::Arbitrary<'r, Type>);
+    ///     # ;
+    ///     ```
+    ///
+    ///   - #### Shorthand syntax
+    ///
+    ///     You can use the anonymous/elided `'_` lifetime (or even implicitly
+    ///     elided if behind `&`) in which case you skip the `<'lt> =` part, and
+    ///     just write:
+    ///
+    ///     ```rust
+    ///     # use ::higher_kinded_types::HKT;
+    ///     # mod some { pub use ::std::borrow::Cow as Arbitrary; }
+    ///     # use str as Type; let _:
+    ///     HKT!(some::Arbitrary<'_, Type>);
+    ///     # ;
+    ///     ```
+    ///
+    /// ### Examples
+    ///
     /// ```rust
     /// use ::higher_kinded_types::*;
     ///
@@ -40,12 +72,12 @@ macro_rules! dispatch {($_:tt
             <$lt:lifetime> = $T:ty $_(,)?
         ) => (
             $($($if_cfg_fn_traits)?
-                $_ crate::ඞ::PhantomData<
+                $_ crate::ඞ::HKT<
                     for<$lt> fn($_ crate::ඞ::__<$lt>) -> $T
                 >
             )?
             $($($if_not_cfg_fn_traits)?
-                $_ crate::ඞ::PhantomData<
+                $_ crate::ඞ::HKT<
                     dyn for<$lt> $_ crate::ඞ::WithLifetime<$lt, T = $T>,
                 >
             )?
@@ -57,7 +89,7 @@ macro_rules! dispatch {($_:tt
             $_($input:tt)*
         ) => (
             $($($if_cfg_fn_traits)?
-                $_ crate::ඞ::PhantomData<
+                $_ crate::ඞ::HKT<
                     fn($_ crate::ඞ::r#for<'_>) -> $_($input)*
                 >
             )?
