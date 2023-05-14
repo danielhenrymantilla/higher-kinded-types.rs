@@ -394,7 +394,7 @@ trait HKT : Send + Sync + Unpin + seal::Sealed
 
 mod seal {
     pub trait Sealed {}
-    impl<T> Sealed for crate::ඞ::HKT<T> {}
+    impl<T : ?Sized> Sealed for crate::ඞ::HKT<T> {}
 }
 
 // impl seal::Sealed for
