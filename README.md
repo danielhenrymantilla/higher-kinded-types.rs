@@ -19,6 +19,6 @@ https://github.com/danielhenrymantilla/higher-kinded-types.rs/actions)
 
 See the documentation of the [HKT] trait for more info.
 
-[HKT]: https://docs.rs/higher-kinded-types/0.1.0-rc1/higher-kinded-types/trait.HKT.html
+[HKT]: https://docs.rs/higher-kinded-types/0.1.0-rc1/higher_kinded_types/trait.HKT.html
 
 <!-- Templated by `cargo-generate` using https://github.com/danielhenrymantilla/proc-macro-template -->
