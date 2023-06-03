@@ -1,10 +1,10 @@
-//! [HKT]: trait@HKT
+//! [Gat]: trait@Gat
 #![doc = include_str!("../README.md")]
 #![no_std]
 #![forbid(unsafe_code)]
 #![allow(type_alias_bounds, uncommon_codepoints)]
 #![allow(
-    // in case `crate::HKT!` does not resolve, we have the `crate::hkt_macro::*` fallback.
+    // in case `crate::Gat!` does not resolve, we have the `crate::hkt_macro::*` fallback.
     macro_expanded_macro_exports_accessed_by_absolute_paths,
 )]
 #![cfg_attr(feature = "better-docs",
@@ -19,9 +19,9 @@ pub
 mod prelude {
     #[doc(no_inline)]
     pub use crate::{
-        HKT,
-        HktRef,
-        HktMut,
+        Gat,
+        GatRef,
+        GatMut,
     };
 }
 
@@ -48,7 +48,7 @@ mod ඞ {
 
     /// Do not use this type!
     pub
-    struct HKT<T : ?Sized>(
+    struct Gat<T : ?Sized>(
         ::core::marker::PhantomData<T>,
         ǃ,
     );
@@ -86,24 +86,25 @@ mod with_lifetime {
     impl<'lt, T : ?Sized + WithLifetime<'lt>>
         WithLifetime<'lt>
     for
-        crate::ඞ::HKT<T>
+        crate::ඞ::Gat<T>
     {
         type T = T::T;
     }
 }
 
 /// The main trait of the crate. The one expressing the `: <'_>`-genericity of
-/// an itself generic type ("generic generic").
+/// an itself generic type ("generic generic" / Higher-Kinded Types).
 ///
-/// [HKT]: trait@HKT
+/// [Gat]: trait@Gat
+/// [`Gat`]: trait@Gat
 ///
 /// It is not to be manually implemented: the only types implementing this trait
-/// are the ones produced by the [`HKT!`] macro.
+/// are the ones produced by the [`Gat!`] macro.
 ///
-/// ## Usage
+/// ## HKT Usage
 ///
-///  1. Make your API take a generic <code>\<T : [HKT]\></code> parameter
-///     (conceptually, a <code>\<T : [ᐸᑊ_ᐳ]\></code> parameter).
+///  1. Make your API take a generic <code>\<T : [Gat]\></code> parameter
+///     (conceptually, a <code>\<T : [Ofᐸᑊ_ᐳ]\></code> parameter).
 ///
 ///     Congratulations, you now[^1] have a _higher-kinded_ API: your API is
 ///     not only generic, but it is also taking a parameter which is, in turn,
@@ -111,17 +112,17 @@ mod with_lifetime {
 ///
 ///  1. #### Callers
 ///
-///     Call sites use the [`HKT!`] macro to produce a type which they
+///     Call sites use the [`Gat!`] macro to produce a type which they
 ///     can _and must_ turbofish to such APIs. For instance:
 ///
-///       - <code>[HKT!]\(&str\)</code> for the pervasive reference case
-///         (which could also use the <code>[HktRef]\<str\></code> type alias to
+///       - <code>[Gat!]\(&str\)</code> for the pervasive reference case
+///         (which could also use the <code>[GatRef]\<str\></code> type alias to
 ///         avoid the macro),
 ///
-///         or <code>[HKT!]\(Cow\<\'_, str\>\)</code> for more complex
+///         or <code>[Gat!]\(Cow\<\'_, str\>\)</code> for more complex
 ///         lifetime-infected types;
 ///
-///       - <code>[HKT!]\(u8\)</code> or other owned types work too: it is not
+///       - <code>[Gat!]\(u8\)</code> or other owned types work too: it is not
 ///         mandatory, at the call-site, to be lifetime-infected, it is just
 ///         _possible_ (maximally flexible API).
 ///
@@ -133,7 +134,7 @@ mod with_lifetime {
 ///
 ///     ```rs
 ///     # #[cfg(any())] macro_rules! ignore {
-///     T::__<'some_lifetime_param>
+///     T::Of<'some_lifetime_param>
 ///     # }
 ///     ```
 ///
@@ -142,24 +143,24 @@ mod with_lifetime {
 ///       - wanting to feed two different lifetimes to `T`:
 ///
 ///          ```rust
-///          use ::higher_kinded_types::HKT;
+///          use ::higher_kinded_types::Gat;
 ///
-///          struct Example<'a, 'b, T : HKT> {
-///              a: T::__<'a>,
-///              b: T::__<'b>,
+///          struct Example<'a, 'b, T : Gat> {
+///              a: T::Of<'a>,
+///              b: T::Of<'b>,
 ///          }
 ///          ```
 ///
 ///       - wanting to "feed a lifetime later" / to feed a
-///         `for<>`-quantified lifetime to your <code>impl [HKT]</code> type:
+///         `for<>`-quantified lifetime to your <code>impl [Gat]</code> type:
 ///
 ///          ```rust
 ///          # #[cfg(any())] macro_rules! ignore {
-///          use ::higher_kinded_types::HKT as ᐸᑊ_ᐳ;
+///          use ::higher_kinded_types::Gat as Ofᐸᑊ_ᐳ;
 ///
-///          fn slice_sort_by_key<Item, Key : ᐸᑊ_ᐳ> (
+///          fn slice_sort_by_key<Item, Key : Ofᐸᑊ_ᐳ> (
 ///              items: &'_ mut [Item],
-///              mut get_key: impl for<'it> FnMut(&'it Item) -> Key::__<'it>,
+///              mut get_key: impl for<'it> FnMut(&'it Item) -> Key::Of<'it>,
 ///          )
 ///          # }
 ///          ```
@@ -169,16 +170,16 @@ mod with_lifetime {
 ///          <details class="custom"><summary><span class="summary-box"><span>Click to show</span></span></summary>
 ///
 ///          ```rust
-///          use ::higher_kinded_types::HKT;
+///          use ::higher_kinded_types::Gat;
 ///
-///          fn slice_sort_by_key<Item, Key : HKT> (
+///          fn slice_sort_by_key<Item, Key : Gat> (
 ///              items: &'_ mut [Item],
-///              mut get_key: impl for<'it> FnMut(&'it Item) -> Key::__<'it>,
+///              mut get_key: impl for<'it> FnMut(&'it Item) -> Key::Of<'it>,
 ///          )
 ///          where
-///              for<'it> Key::__<'it> : Ord,
+///              for<'it> Key::Of<'it> : Ord,
 ///          {
-///              items.sort_by(|a: &'_ Item, b: &'_ Item| <Key::__<'_>>::cmp(
+///              items.sort_by(|a: &'_ Item, b: &'_ Item| <Key::Of<'_>>::cmp(
 ///                  &get_key(a),
 ///                  &get_key(b),
 ///              ))
@@ -188,10 +189,10 @@ mod with_lifetime {
 ///          let clients: &mut [Client] = // …;
 ///          # &mut []; struct Client { key: String, version: u8 }
 ///
-///          slice_sort_by_key::<_, HKT!(&str)>(clients, |c| &c.key); // ✅
+///          slice_sort_by_key::<_, Gat!(&str)>(clients, |c| &c.key); // ✅
 ///
 ///          // Important: owned case works too!
-///          slice_sort_by_key::<_, HKT!(u8)>(clients, |c| c.version); // ✅
+///          slice_sort_by_key::<_, Gat!(u8)>(clients, |c| c.version); // ✅
 ///
 ///          # #[cfg(any())] {
 ///          // But the classic `sort_by_key` stdlib API fails, since it does not use HKTs:
@@ -201,34 +202,34 @@ mod with_lifetime {
 ///
 ///          </details>
 ///
-/// [^1]: If we want to be pedantic, the bound `T : HKT` is kind of an abuse of
+/// [^1]: If we want to be pedantic, the bound `T : Gat` is kind of an abuse of
 /// terminology: `T` itself is not higher-kinded, the generic API taking
-/// `<T : HKT>` is.
+/// `<T : Gat>` is.
 ///
 /// ### Wait a moment; this is just a GAT! Why are you talking of HKTs?
 ///
-/// Indeed, if you stare into ~~the abyss~~ the definition of the
-/// <code>[HKT]</code> trait, you'll notice it's basically a GAT reduced to its
-/// more basic constituent:
+/// Indeed, the definition of the <code>[Gat]</code> trait is basically that of
+/// a trait featuring the simplest possible GAT:
 ///
 /// ```rust
-/// trait Gat {
-///     type Assoc<'lt>;
+/// trait Trait { // basic trait
+///     type Assoc<'lt>; // Associated Type which is itself Generic = GAT.
 /// }
 ///
-/// struct Struct<'a, 'b, T : Gat> {
+/// struct Struct<'a, 'b, T : Trait> {
 ///     a: T::Assoc<'a>,
 ///     b: T::Assoc<'b>,
 /// }
 /// ```
 ///
-/// Yes, GAT and HKTs, from this point of view, are quite interchangeable:
+/// Yes, the `: <'_>` signature pattern of HKTs, and GATs, from this point of view,
+/// are quite interchangeable:
 ///
-///   - this whole crate is a demonstration of implementing HKTs through GATs
-///     (+ some extra `for<>`-quantifications);
+///   - this whole crate is a demonstration of featuring `: <'_>` idioms through
+///     a [`Gat`] (+ some extra `for<>`-quantifications);
 ///
-///   - in a world with HKT as a first-class construct, GATs could then just be
-///     HKT Associated Types (HATs instead of GATs 🤠).
+///   - in a world with HKTs and `: <'_>` as a first-class construct, GATs could
+///     then just be HKT Associated Types (HATs instead of GATs 🤠).
 ///
 ///     ```rust ,ignore
 ///     //! pseudo-code!
@@ -252,7 +253,9 @@ mod with_lifetime {
 /// ```
 ///
 /// and then use `Closure<Args, Ret = …>` where we currently use
-/// `Fn(Args…) -> Output`;
+/// `Fn(Args…) -> Output`: that is, the _canonical_ `Fn…` traits can easily be
+/// polyfilled with any arbitrary trait of our choice featuring the same
+/// functional API (same method signature).
 ///
 /// or, _vice versa_, never define custom traits or interfaces, and always
 /// use closures:
@@ -298,10 +301,11 @@ mod with_lifetime {
 /// [`Stream`]: https://docs.rs/futures/^0.3.28/futures/stream/trait.Stream.html
 /// [`stream::unfold()`]: https://docs.rs/futures/^0.3.28/futures/stream/fn.unfold.html
 ///
-/// And that same difference applies to general GATs _vs._ HKTs: the ability to
-/// produce _ad-hoc_ / on-demand <code>impl [HKT]</code> types / `HKT` type
-/// "expressions", thanks to the [`HKT!`] macro, is what makes HKTs convenient
-/// and flexible, _vs._ the overly cumbersome aspect of only using GATs.
+/// And that same difference applies to arbitrary GATs _vs._ [`Gat`]: the ability to
+/// produce _ad-hoc_ / on-demand <code>impl [Gat]</code> types / [`Gat`] type
+/// "expressions", thanks to the [`Gat!`] macro, is what makes [`Gat`] convenient
+/// and flexible, _vs._ the overly cumbersome aspect of manually using custom
+/// GATs.
 ///
 /// Indeed, compare:
 ///
@@ -320,13 +324,13 @@ mod with_lifetime {
 /// to:
 ///
 /// ```rust
-/// # use ::higher_kinded_types::HKT;
-/// type StrRef = HKT!(<'lt> = &'lt str);
+/// # use ::higher_kinded_types::Gat;
+/// type StrRef = Gat!(<'lt> = &'lt str);
 /// ```
 ///
 /// #### Conclusion
 ///
-/// So, to summarize, this <code>[HKT]</code> trait is just:
+/// So, to summarize, this <code>[Gat] = ": \<\'_\>"</code> HKT pattern is just:
 ///
 ///   - some GAT API having been _canonical_-ized,
 ///
@@ -335,105 +339,104 @@ mod with_lifetime {
 ///         `Closure<Args, Ret = R>` trait);
 ///
 ///   - which can be "inhabited" _on demand_ / in an _ad-hoc_ fashion thanks to
-///     the <code>[HKT!]\(\<\'input\> = Output…\)</code> macro,
+///     the <code>[Gat!]\(\<\'input\> = Output…\)</code> macro,
 ///
 ///       - much like how, in the realm of closures, it is done with the
 ///         `|input…| output…` closure expressions.
 ///
 /// In other words:
 ///
-/// > [HKT]s are to GATs what closures are to traits.
+/// > `: <'_>` and HKTs are to GATs what closures are to traits.
 ///
 ///   - (it's the `Fn(Lifetime) -> Type` of the type realm)
 ///
 /// Finally, another observation which I find interesting, is that:
 ///
 /// ```rust
-/// use ::higher_kinded_types::HKT;
-///
-/// type A = HKT!(<'r> = &'r str);
+/// # use ::higher_kinded_types::Gat;
+/// #
+/// type A = Gat!(<'r> = &'r str);
 /// // vs.
-/// type         B<'r> = &'r str;
+/// type B        <'r> = &'r str;
 /// ```
 ///
-/// is an annoying limitation and similar distinction to the one that certain
-/// languages have between values, and functions, which are treated separately
-/// (rather than as first-class citizens / like the other values).
+/// is an annoying limitation of Rust, which happens to feature a similar
+/// distinction that certain past languages have had between values, and
+/// functions, which are treated separately (rather than as first-class citizens
+/// / like the other values).
 ///
-/// In Rust, `type B<'r> = &'r str;` suffers from a similar limitation:
-/// it's a special construct, which yields a _"type" constructor_, that is, some
-/// syntax, `B`, to which we can feed a lifetime, so as to end up with a
-/// _type_. But `B`, in and of itself, **is not a type**.
+/// In Rust, `type B<'r> = &'r str;` suffers from this kind of limitation, only
+/// in the type realm: `type B<'r> =` is a special construct, which yields a
+/// _"type" constructor_. That is, it yields some syntax, `B`, to which we can
+/// feed a lifetime `'lt`, by writing `B<'lt>`, so as to end up with a _type_.
 ///
-/// Which is why it cannot be fed, alone, to some type-generic API that would
+/// **But `B`, in and of itself, _is not a type_**, even if we often call it a
+/// "generic type" by abuse of terminology.
+///
+/// Which is why it cannot be fed, _alone_, to some type-generic API that would
 /// want to be the one feeding the lifetime parameter: it does not play well
 /// with "generic generics"!
 ///
-/// This is where HKTs, thus, shine.
+/// The real "generic type", that is, the _type_, which is, itself,
+/// lifetime-generic, in this example, is `A`
+///
+/// This is where [`Gat!`] and HKTs, thus, shine.
 pub
-trait HKT : Send + Sync + Unpin + seal::Sealed
+trait Gat : Send + Sync + Unpin + seal::Sealed
 // where
 //     Self : for<'any> WithLifetime<'any>,
 {
     /// "Instantiate lifetime" / "apply/feed lifetime" operation:
-    ///   - Given <code>\<T : [HKT]\></code>,
+    ///   - Given <code>\<T : [Gat]\></code>,
     ///
-    ///     `T::__<'lt>` stands for the conceptual `T<'lt>` type.
+    ///     `T::Of<'lt>` stands for the HKT-conceptual `T<'lt>` type.
     ///
-    ///   - Pseudo-code syntax:
-    ///     <details class="custom"><summary><span class="summary-box"><span>Click to show</span></span></summary>
-    ///
-    ///     given <code>\<T : [ᐸᑊ_ᐳ]\></code>,
-    ///
-    ///     `T::__<'lt>` stands for the conceptual `T<'lt>` type.
-    ///     </details>
-    ///
-    /// [HKT]: trait@HKT
-    type __<'lt>;
+    /// [Gat]: trait@Gat
+    type Of<'lt>;
 }
 
 mod seal {
     pub trait Sealed {}
-    impl<T : ?Sized> Sealed for crate::ඞ::HKT<T> {}
+    impl<T : ?Sized> Sealed for crate::ඞ::Gat<T> {}
 }
 
 // impl seal::Sealed for
 #[doc(hidden)]
-impl<T : ?Sized> HKT for T
+impl<T : ?Sized> Gat for T
 where
     Self : for<'any> WithLifetime<'any> + seal::Sealed,
 {
-    type __<'lt> = <Self as WithLifetime<'lt>>::T;
+    type Of<'lt> = <Self as WithLifetime<'lt>>::T;
 }
 
 crate::utils::cfg_match! {
     feature = "better-docs" => (
-        /// <code>: [ᐸᑊ_ᐳ]</code> is a hopefully illustrative syntax that
-        /// serves as an alias for <code>: [HKT]</code>.
+        /// <code>: [Ofᐸᑊ_ᐳ]</code> is a hopefully illustrative syntax that
+        /// serves as an alias for <code>: [Gat]</code>.
         ///
-        /// [HKT]: trait@HKT
+        /// [Gat]: trait@Gat
         ///
-        /// When trying to teach the notion of a HKT / "generic generic" to
+        /// When trying to teach the notion of a Gat / "generic generic" to
         /// somebody who has never run into it, _e.g._, in introductory
-        /// documentation, blog posts, _etc._, the <code>: [ᐸᑊ_ᐳ]</code>
+        /// documentation, blog posts, _etc._, the <code>: [Ofᐸᑊ_ᐳ]</code>
         /// syntax ought to be more _intuitive_:
         ///
-        ///   - (the idea being that `: ᐸᑊ_ᐳ` looks quite a bit like `: <'_>`).
+        ///   - (the idea being that `: Ofᐸᑊ_ᐳ` looks quite a bit like `: Of<'_>`).
         ///
         /// ```rust
         /// use ::higher_kinded_types::*;
         ///
-        /// struct Example<'a, 'b, T : ᐸᑊ_ᐳ> {
-        ///     a: T::__<'a>,
-        ///     b: T::__<'b>,
+        /// struct Example<'a, 'b, T : Ofᐸᑊ_ᐳ> {
+        ///     a: T::Of<'a>,
+        ///     b: T::Of<'b>,
         /// }
         /// ```
         ///
-        ///   - ⚠️ real code should nonetheless be using the <code>: [HKT]</code>
+        ///   - ⚠️ real code should nonetheless be using the <code>: [Gat]</code>
         ///     syntax: ASCII characters are easier to type with a standard
-        ///     keyboard layout, contrary to `ᐸᑊ_ᐳ`, which will probably require
+        ///     keyboard layout, contrary to `Ofᐸᑊ_ᐳ`, which will probably require
         ///     copy-pasting.
-        pub trait ᐸᑊ_ᐳ = HKT;
+        pub trait Ofᐸᑊ_ᐳ = Gat;
     );
 
     _ => (
@@ -441,20 +444,20 @@ crate::utils::cfg_match! {
             #![allow(unused)]
             pub use super::*;
             macro_rules! __ {() => ()}
-            use __ as HKT;
+            use __ as Gat;
         }
 
-        pub use r#trait::HKT as ᐸᑊ_ᐳ;
+        pub use r#trait::Gat as Ofᐸᑊ_ᐳ;
     );
 }
 
-/// Shorthand alias for <code>[HKT!]\(\<\'any\> = \&\'any T\)</code>.
+/// Shorthand alias for <code>[Gat!]\(\<\'any\> = \&\'any T\)</code>.
 pub
-type HktRef<T : ?Sized> = HKT!(&'_ T);
+type GatRef<T : ?Sized> = Gat!(&'_ T);
 
-/// Shorthand alias for <code>[HKT!]\(\<\'any\> = \&\'any mut T\)</code>.
+/// Shorthand alias for <code>[Gat!]\(\<\'any\> = \&\'any mut T\)</code>.
 pub
-type HktMut<T : ?Sized> = HKT!(&'_ mut T);
+type GatMut<T : ?Sized> = Gat!(&'_ mut T);
 
 #[cfg(feature = "ui-tests")]
 #[doc = include_str!("compile_fail_tests.md")]
