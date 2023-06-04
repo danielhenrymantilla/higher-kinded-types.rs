@@ -1,0 +1,6 @@
+[book]
+authors = ["Daniel Henry-Mantilla"]
+language = "en"
+multilingual = false
+src = "src"
+title = "Higher-Kinded Types: a magical journey dancing with lifetimes"
