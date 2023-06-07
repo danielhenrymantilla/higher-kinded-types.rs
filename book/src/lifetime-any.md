@@ -47,18 +47,18 @@ promotion LINKME).
 
 This is a `: 'static` type, so it can be coërced to a `dyn Any`, with the `TypeId::of::<&i32>()`.
 
-Now say you have a `&'r i32`. What if, with a lil unsafe, we did the following:
+Now say you have a `&'u i32`. What if, with a lil unsafe, we did the following:
 
 ```rust ,ignore
 use ::core::any::Any;
 
 /// Is this sound?
-fn we_do_a_lil_unsafe<'r>(
-    r: &'r i32,
-) -> Box<dyn 'r + Any>
+fn we_do_a_lil_unsafe<'u>(
+    r: &'u i32,
+) -> Box<dyn 'u + Any>
 {
-    // Safety: this `'static` is immediately erased to `dyn 'r + …`, so the
-    // resulting entity won't be usable beyond `'r`.
+    // Safety: this `'static` is immediately erased to `dyn 'u + …`, so the
+    // resulting entity won't be usable beyond `'u`.
     let r: &'static i32 = unsafe { ::core::mem::transmute(r) };
     Box::new(r)
 }
@@ -72,7 +72,7 @@ Well, the following compiling just fine is a bit problematic, is it not?
 use ::core::any::Any;
 
 fn wOnT_bE_uSaBlE_bEyOnD_r(
-    r: Box<dyn 'r + Any>
+    r: Box<dyn 'u + Any>
 ) -> Box<dyn 'static + Any>
 {
     r
@@ -80,10 +80,10 @@ fn wOnT_bE_uSaBlE_bEyOnD_r(
 ```
 
   - Indeed, `: 'static` is a super-bound of `Any`, meaning that whenever something is `: Any`,
-    then it also is `: 'static`! So a `Box<dyn 'r + Any>` is actually a
-    `Box<dyn 'r + 'static + Any>`, which, in turn, is a `Box<dyn 'static + Any>` since `: 'a + 'b`
+    then it also is `: 'static`! So a `Box<dyn 'u + Any>` is actually a
+    `Box<dyn 'u + 'static + Any>`, which, in turn, is a `Box<dyn 'static + Any>` since `: 'a + 'b`
     is equivalent to `: union('a, 'b) ~ max('a, 'b) = 'static when 'b = 'static` (people often
-    trip up on this, since they're so used to seeing `+ 'r` as a max-bound of usability of items,
+    trip up on this, since they're so used to seeing `+ 'u` as a max-bound of usability of items,
     when it's actually _a lower bound_. Same as with `FnMut()` and `FnOnce()`, for instance: whilst
     an arbitrary `F : FnOnce()` may only be callable once (conservative assumption _barring extra
     information_), a `F : FnOnce() + FnMut()` is not an oxymoron, but just a plain `F : FnMut()`.
@@ -103,40 +103,43 @@ use ::core::any::TypeId;
 
 // for reference, `Any`'s definition:
 #[cfg(feature = "if I were a core 🎶")]
-pub
-trait Any : 'static {
-    fn type_id(&self) -> TypeId {
-        impl<T : ?Sized + 'static> Any for T {}
-
-        TypeId::of::<Self>()
+mod real_any {
+    pub
+    trait Any : 'static {
+        fn type_id(&self) -> TypeId;
+    }
+    impl<T : ?Sized + 'static> Any for T {
+        fn type_id(&self) -> TypeId {
+            TypeId::of::<T>()
+        }
     }
 }
 
 pub
-trait UnboundedAny : seal::StaticSealed {
+trait MyAny : seal::StaticSealed {
     fn type_id(&self) -> TypeId;
 }
 
+impl<T : ?Sized + 'static> MyAny for T {
+    fn type_id(&self) -> TypeId {
+        TypeId::of::<Self>()
+    }
+}
+
 // Main trick: this, much like `Any`'s own `: 'static`, makes `: 'static` a
-// mandatory step to be `UnboundedAny`, but the big difference is that despite
+// mandatory step to be `MyAny`, but the big difference is that despite
 // the requirement, we don't get the reverse implicitation: as far as Rust is
-// concerned, there could exist `T : UnboundedAny` for which `T : 'static` would
+// concerned, there could exist `T : MyAny` for which `T : 'static` would
 // not hold!
 mod seal {
     pub trait StaticSealed {}
     impl<T : ?Sized + 'static> StaticSealed for T {}
 }
 
-impl<T : ?Sized + 'static> UnboundedAny for T {
-    fn type_id(&self) -> TypeId {
-        TypeId::of::<Self>()
-    }
-}
-
 // --------------------------------
 
 // from there, the usual downcasting shenanigans:
-impl dyn '_ + UnboundedAny {
+impl dyn '_ + MyAny {
     pub
     fn is<T : 'static>(&self) -> bool {
         self.type_id() == TypeId::of::<T>()
@@ -151,22 +154,22 @@ impl dyn '_ + UnboundedAny {
 }
 
 /// Is this sound?
-fn we_do_a_lil_unsafe<'r>(
-    r: &'r i32,
-) -> Box<dyn 'r + UnboundedAny>
+fn we_do_a_lil_unsafe<'u>(
+    r: &'u i32,
+) -> Box<dyn 'u + MyAny>
 {
-    // Safety: this `'static` is immediately erased to `dyn 'r + …`,
-    // so the resulting entity won't be usable beyond `'r`.
+    // Safety: this `'static` is immediately erased to `dyn 'u + …`,
+    // so the resulting entity won't be usable beyond `'u`.
     let r: &'static i32 = unsafe { ::core::mem::transmute(r) };
     Box::new(r)
 }
 ```
 
-And now to check that the `'r` is an effective bound:
+And now to check that the `'u` is an effective bound:
 
 ```rust ,compile_fail
-fn lets_see_the_region_of_usability<'r, 'tell_me>(
-    input: Box<dyn 'r + UnboundedAny>
+fn lets_see_the_region_of_usability<'u, 'tell_me>(
+    input: Box<dyn 'u + MyAny>
 ) -> impl 'tell_me + Sized
 {
     input
@@ -179,96 +182,53 @@ yields:
 error: lifetime may not live long enough
   --> src/lib.rs:67:5
    |
-63 | fn lets_see_the_region_of_usability<'r, 'tell_me>(
+63 | fn lets_see_the_region_of_usability<'u, 'tell_me>(
    |                                     --  -------- lifetime `'tell_me` defined here
    |                                     |
-   |                                     lifetime `'r` defined here
+   |                                     lifetime `'u` defined here
 ...
 67 |     input
-   |     ^^^^^ function was supposed to return data with lifetime `'tell_me` but it is returning data with lifetime `'r`
+   |     ^^^^^ function was supposed to return data with lifetime `'tell_me` but it is returning data with lifetime `'u`
    |
-   = help: consider adding the following bound: `'r: 'tell_me`
+   = help: consider adding the following bound: `'u: 'tell_me`
 ```
 
-So any `'tell_me` wherein a `Box<dyn 'r + UnboundedAny>` may be used has to satisfy `'r ⊆ 'tell_me`,
-_i.e._, the biggest such one is `'r` itself, _i.e._, a `Box<dyn 'r + UnboundedAny>` is very much
-_not usable beyond `'r`_.
+So any `'tell_me` wherein a `Box<dyn 'u + MyAny>` may be used has to satisfy `'u ⊆ 'tell_me`,
+_i.e._, the biggest such one is `'u` itself, _i.e._, a `Box<dyn 'u + MyAny>` is very much
+_not usable beyond `'u`_.
 
 So all is good, right?
 
-![right?](https://user-images.githubusercontent.com/9920355/243207321-63ad631e-8fb6-458e-8aa8-6e44f868386d.png)
+<img
+    src="https://user-images.githubusercontent.com/9920355/243207321-63ad631e-8fb6-458e-8aa8-6e44f868386d.png"
+    alt="right?"
+    title="right?"
+    height="200px"
+/>
 
-```rust ,edition2018
-# use ::core::any::TypeId;
-#
-# pub
-# trait UnboundedAny : seal::StaticSealed {
-#     fn type_id(&self) -> TypeId;
-# }
-#
-# // Main trick: this, much like `Any`'s own `: 'static`, makes `: 'static` a
-# // mandatory step to be `UnboundedAny`, but the big difference is that despite
-# // the requirement, we don't get the reverse implicitation: as far as Rust is
-# // concerned, there could exist `T : UnboundedAny` for which `T : 'static` would
-# // not hold!
-# mod seal {
-#     pub trait StaticSealed {}
-#     impl<T : ?Sized + 'static> StaticSealed for T {}
-# }
-#
-# impl<T : ?Sized + 'static> UnboundedAny for T {
-#     fn type_id(&self) -> TypeId {
-#         TypeId::of::<Self>()
-#     }
-# }
-#
-# // --------------------------------
-#
-# // from there, the usual downcasting shenanigans:
-# impl dyn '_ + UnboundedAny {
-#     pub
-#     fn is<T : 'static>(&self) -> bool {
-#         self.type_id() == TypeId::of::<T>()
-#     }
-#
-#     pub
-#     fn downcast_ref<T : 'static>(&self) -> Option<&T> {
-#         self.is::<T>().then(|| unsafe {
-#             &*(self as *const Self as *const T)
-#         })
-#     }
-# }
-#
-# /// Is this sound?
-# fn we_do_a_lil_unsafe<'r>(
-#     r: &'r i32,
-# ) -> Box<dyn 'r + UnboundedAny>
-# {
-#     // Safety: this `'static` is immediately erased to `dyn 'r + …`,
-#     // so the resulting entity won't be usable beyond `'r`.
-#     let r: &'static i32 = unsafe { ::core::mem::transmute(r) };
-#     Box::new(r)
-# }
-#
-fn uh_oh<'r>(
-    r: Box<dyn 'r + UnboundedAny>,
+```rust ,ignore
+fn uh_oh<'u>(
+    r: Box<dyn 'u + MyAny>,
 ) -> &'static i32
 {
     *r.downcast_ref::<&i32>().unwrap()
 }
 ```
 
-Indeed, while returning a properly `'r`-bounded entity was _necessary_ for soundness, it was not
-_sufficient_: a `'r`-bounded entity may still allow certain APIs to extract non-`'r`-bounded stuff
+Indeed, whilst returning a properly `'u`-bounded entity was _necessary_ for soundness, it was not
+_sufficient_: a `'u`-bounded entity may still allow certain APIs to extract non-`'u`-bounded stuff
 out of it!
 
 And in this instance, the very API allowing downcasts was the culprit:
 
 ```rust ,ignore
-impl<'r> dyn 'r + UnboundedAny {
+impl<'u> dyn 'u + MyAny {
     pub
-    fn downcast_ref<T : 'static>(&self) -> Option<&T> {
-        (self.type_id() == TypeId::of::<T>()).then(|| unsafe {
+    fn downcast_ref<'r, T : 'static>(
+        self: &'r (dyn 'u + MyAny),
+    ) -> Option<&'r T>
+    {
+        self.is:<T>().then(|| unsafe {
             &*(self as *const Self as *const T)
         })
     }
@@ -278,24 +238,27 @@ impl<'r> dyn 'r + UnboundedAny {
 which, for `T = &'static i32`, becomes:
 
 ```rust ,ignore
-impl<'r> dyn 'r + UnboundedAny {
+impl<'u> dyn 'u + MyAny {
     pub
-    fn downcast_ref<&'static i32>(&self) -> Option<&&'static i32> {
-        (self.type_id() == TypeId::of::<&i32>()).then(|| unsafe {
+    fn downcast_ref<'r, &'static i32>(
+        self: &'r (dyn 'u + MyAny),
+    ) -> Option<&'r &'static i32>
+    {
+        (self.type_id() == TypeId::of::<&'static i32>()).then(|| unsafe {
             &*(self as *const Self as *const T)
         })
     }
 }
 ```
 
-Notice how we end up with a check from `self.type_id()` (which returns `TypeId::of::<&i32>()` for
-our constructed value), against `TypeId::of::<&i32>()`[^static].
+Notice how we end up with a check from `self.type_id()` (which returns `TypeId::of::<&'static i32>()`
+for our constructed value), against the very same `TypeId::of::<&'static i32>()`.
 
-The check passes, and we end up with a `&'_ &'static i32`, with `'_` being the lifetime of the
-`&self = &'_ self = self: &'_ (dyn 'r + UnboundedAny)` receiver.
+The check passes, and we end up with a `&'r &'static i32`, with `'r` being the lifetime of the
+`self: &'r (dyn 'u + MyAny)` receiver.
 
-Which is properly `'_`-bounded and thus `'r`-bounded (with `'_`, itself, `'r`-bounded: `'r ⊆ '_`),
-but from which we can simply extract the `&'static i32`, unbounded, by simple `*`-dereference.
+Which is properly `'r`-bounded and thus `'u`-bounded (since `'u ⊆ 'r`), but from which we can simply
+extract the `&'static i32`, unbounded, by simple `*`-dereference.
 
 Uh-oh.
 
@@ -305,16 +268,387 @@ Before tackling a more general fix to this problem, let's palliate it by replaci
 above with the following more limited API:
 
 ```rust ,ignore
-impl<'r> dyn 'r + UnboundedAny {
+impl<'u> dyn 'u + MyAny {
     /* no more downcast_ref! */
     pub
-    fn downcast_bounded_ref<T : 'static>(&self) -> Option<&'r T> {
-        (self.type_id() == TypeId::of::<&T>()).then(|| unsafe {
-            &*(self as *const Self as *const &T) // : &'_ &'static T
-                                                   as &'r T /* deref coërcion */
+    fn downcast_bounded_ref<'r, T : 'static>(
+        self: &'r (dyn 'u + MyAny),
+    ) -> Option<&'r &'u T>
+    {
+        self.is::<&T>().then(|| unsafe {
+            &*(self as *const Self as *const &'static T) // : &'r &'static T
+                                                         // : &'r &'u      T
         })
     }
 }
 ```
 
-[^static]: we are using `&i32` as a shorthand for `&'static i32`, here.
+The main difference is that the `TypeId` check now unconditionally targets `&T` references, rather
+than arbitrarily generic `T`s. In other words, if we named `U` the argument given to `TypeId::of`,
+we are restricting ourselves to `U = &T = &_` types.
+
+By doing this, we can then do another thing: rather than returning `-> &U` _i.e._, `-> &&'static T`,
+which was problematic, we instead return `&&'u T`, thereby having restricted the problematic
+lifetime accordingly!
+
+Finally, we can simplify it down a bit by realizing the outer `&'r` is not playing any role here:
+if we are to return `-> &'r &'u T`, we may as well return `&'u T`! Much like we return `-> bool`s
+rather than `&bool`:
+
+```rust ,ignore
+impl<'u> dyn 'u + MyAny {
+    /* no more downcast_ref! */
+    pub
+    fn downcast_bounded_ref<'r, T : 'static>(
+        self: &'r (dyn 'u + MyAny),
+    ) -> Option<&'u T>
+    {
+        self.is::<&T>().then(|| unsafe {
+            &*(self as *const Self as *const &'static T) // : &'r &'static T
+                                                         // : &'r &'u      T
+        })
+        .map(|r: &'r &'u T| -> &'u T { *r }) // for convenience
+    }
+}
+```
+
+**With this API, we finally got `we_do_a_lil_unsafe()` to become a sound API!**
+
+```rust ,edition2018
+/// Sound!
+pub
+fn we_do_a_lil_unsafe<'u>(
+    r: &'u i32,
+) -> Box<dyn 'u + MyAny>
+{
+    // SAFETY:
+    //  1. this `'static` is immediately erased to `dyn 'u + …`,
+    //     so the resulting entity won't be usable beyond `'u`;
+    //  2. the only way to extract this `&i32` back from a `dyn MyAny` is
+    //     through `downcast_bounded_ref`, which also yields a `'u`-bounded &i32
+    let r: &'static i32 = unsafe { ::core::mem::transmute(r) };
+    Box::new(r)
+}
+```
+
+So, until now, we've been attempting to `dyn Any`-erase a `&'u i32`, but _quid_ of other
+`'u`-infected types?
+
+#### How well does this generalize to other lifetime-infected types?
+
+DRAGON BALL CELL PICTURE HERE
+
+Let's consider, now, for instance, the type `Cell<&'u i32>`:
+
+```rust
+/// Is this sound?
+pub
+fn we_do_a_lil_unsafe_2<'u>(
+    r: Cell<&'u i32>,
+) -> Box<dyn 'u + MyAny>
+{
+    // SAFETY:
+    //  1. this `'static` is immediately erased to `dyn 'u + …`,
+    //     so the resulting entity won't be usable beyond `'u`;
+    //  2. the only way to extract this `Cell<&i32>` back from a `dyn MyAny` is
+    //     through `downcast_cell_ref`, which also yields a `'u`-bounded Cell<&i32>
+    let r: Cell<&'static i32> = unsafe { ::core::mem::transmute(r) };
+    Box::new(r)
+}
+
+impl dyn 'u + MyAny {
+    fn downcast_cell_ref<'r, T : 'static>(
+        self: &'r (dyn 'u + MyAny),
+    ) -> Option<&'r Cell<&'u T>>
+    {
+        self.is::<Cell<&'static T>>().then(unsafe {
+            &*(self as *const Self as *const Cell<&T>)
+        })
+    }
+}
+```
+
+So, is this sound?
+
+<img
+    src="https://user-images.githubusercontent.com/9920355/243356995-0bfdfa9f-e2d8-4520-af76-cfd656724f8b.png"
+    alt="well yes but actually no"
+    title="well yes but actually no"
+    height="200px"
+/>
+
+Indeed, as long as we were dealing with `&'u i32` kind of references, the only pitfall to be careful
+with was ending up with a `&'new_u i32` whereing `'new_u` might be _bigger_ than `'u` (lifetime
+_extension_ for references is unsound).
+
+  - This is why my talk has been about (upper-)_bounding_ the `'new_u` so as to ensure that
+    `'u : 'new_u` always hold.
+
+But with `Cell<&'u i32>`, we have not only that problem (lifetime _extension_ being unsound), but we
+also have _another constraint_:
+
+  - lifetime _reduction_ behind a `Cell` is unsound too! (we say that `Cell<_>` is **not covariant**
+    (and since it is not contravariant either, we call this invariance)).
+
+    For those unconvinced, see this:
+
+    ```rust ,edition2018
+    use ::core::cell::Cell as Mut;
+
+    fn unsound<'local>(
+        s: &'local Mut<&'static str>,
+    ) -> &'local Mut<&'local str>
+    {
+        unsafe { ::core::mem::transmute(s) }
+    }
+
+    let s: Mut<&'static str> = "static str".into();
+    {
+        let local = &String::from("...");
+        Mut::</*&'local str*/>::set(
+            unsound(&s), // : &'_ Mut<&'local str>
+            local,               // : &'local str
+        );
+    } // <- the `String` is dropped!
+    let _unrelated: String = "UAF".into();
+    println!("{}", s.get());
+    ```
+
+    Feel free to click on the <i class="fa fa-play play-button"></i> of that snippet. It features UB,
+    since it will read a dangling pointer leading to a Use-After-Free, so the exact behavior is
+    technically unpredictable. With that being said, I've written it in a way which made `s.get()`,
+    when I ran it, read the memory of the `_unrelated: String`, thereby printing `UAF`!
+
+    ___
+
+This means that now we need `'new_u` to be _exactly_ `'u`: if it ends up being _smaller_ than `'u`,
+we'll be able to implement the `fn unsound` above using `we_do_a_lil_unsafe_2()`.
+
+In other words, we need to make sure the returned `dyn 'u + …` is also, somehow, "lower-bounded" by
+`'u` too: `'u` must not be able to shrink.
+
+And this is a problem, since `dyn 'u + MyAny` is a type covariant in `'u`: `'u` is very much allowed
+to shrink!
+
+```rust ,edition2018
+trait MyAny /* … */ { /* … */ }
+
+fn shrink</* from */ 'big, /* to */ 'small>(
+    b: Box<dyn 'big + MyAny>,
+) -> Box<dyn 'small + MyAny>
+where
+    'big : 'small,
+{
+    b
+}
+# fn main() { println!("✅"); }
+```
+
+  - You may wonder _why_ that is. The reason for it is that `+ 'duration` expresses the
+    `+ UsableWithin<'duration>` property, and if something is `UsableWithin<'some_duration>`,
+    then _a foriori_ it is `UsableWithin<'a_smaller_duration>`; much like when something is
+    `+ Copy` then _a fortiori_ it is `+ Clone`.
+
+How do we solve this?
+
+Very easily, actually: just add an artificial `<'u>` generic lifetime parameter to our `MyAny`
+trait.
+
+Indeed, `Trait<'some_lt>`, does not have a specific meaning like `Trait + 'usability` does (which is
+what allowed Rust to be lenient and allow shrinking that `+ 'usability`). Within an arbitrary/opaque
+`Trait<'lt>` definition, that `'lt` may play any role, including APIs wherein shrinking `'lt` would
+be unsound (like our own very case, obviously, but not only that). This means that Rust is not
+allowed to modify that `<'lt>` in any way: it will keep it exactly as it initially appears (we say
+that `dyn Trait<'lt>` is _invariant_ in `'lt`).
+
+  - Alas, the `<'lt>` parameter on `Trait`, the `+ 'usability` parameter is still needed for the
+    type, and `Box<dyn Trait<'lt>>` is sugar not for `Box<dyn Trait<'lt> + 'lt>` but for
+    `Box<dyn Trait<'lt> + 'static>`, which is a type that combines the worst of all worlds:
+      - the presence of `<'lt>` in the type makes it unable to be used beyond it ("infected by it");
+      - the presence of (the implicit) `+ 'static` makes coërcing a concrete type to it more
+        difficult.
+
+    In other words, you'd have to prove that your concrete type is `: 'static` only for that
+    property to be immediately thrown out of the window because of `<'lt>`.
+
+    Conclusion: we'll have to "stutter" and talk about `dyn 'lt + Trait<'lt>`.
+
+```rust, edition2018
+use ::core::any::TypeId;
+
+pub
+trait MyAny<'lt> : seal::StaticSealed {
+    fn type_id(&self) -> TypeId;
+}
+
+impl<T : ?Sized + 'static> MyAny<'_> for T {
+    fn type_id(&self) -> TypeId {
+        TypeId::of::<Self>()
+    }
+}
+
+// Main trick: this, much like `Any`'s own `: 'static`, makes `: 'static` a
+// mandatory step to be `MyAny`, but the big difference is that despite
+// the requirement, we don't get the reverse implicitation: as far as Rust is
+// concerned, there could exist `T : MyAny` for which `T : 'static` would
+// not hold!
+mod seal {
+    pub trait StaticSealed {}
+    impl<T : ?Sized + 'static> StaticSealed for T {}
+}
+
+// --------------------------------
+
+// from there, the usual downcasting shenanigans:
+impl<'u> dyn 'u + MyAny<'u> {
+    pub
+    fn is<T : 'static>(&self) -> bool {
+        self.type_id() == TypeId::of::<T>()
+    }
+
+    pub
+    fn downcast_bounded_ref<'r, T : 'static>(
+        self: &'r (dyn 'u + MyAny<'u>),
+    ) -> Option<&'r &'u T>
+    {
+        self.is::<&'static T>().then(|| unsafe {
+            &*(self as *const Self as *const &'static T) // : &'r &'static T
+                                                         // : &'r &'u      T
+        })
+    }
+
+    fn downcast_cell_ref<'r, T : 'static>(
+        self: &'r (dyn 'u + MyAny<'u>),
+    ) -> Option<&'r Cell<&'u T>>
+    {
+        self.is::<Cell<&'static T>>().then(unsafe {
+            &*(self as *const Self as *const Cell<&T>)
+        })
+    }
+}
+
+/// This is sound! 🥳
+pub
+fn we_do_a_lil_unsafe_2<'u>(
+    r: Cell<&'u i32>,
+) -> Box<dyn 'u + MyAny<'u>>
+{
+    // SAFETY:
+    //  1. this `'static` is immediately erased to `dyn 'u + …`,
+    //     so the resulting entity won't be usable beyond `'u`;
+    //  2. the only way to extract this `Cell<&i32>` back from a `dyn MyAny` is
+    //     through `downcast_cell_ref`, which also yields a `'u`-bounded Cell<&i32>
+    //  3. Variance (or rather lack thereof): the input `r` is invariant in `'u`,
+    //     and the returned `dyn 'u + MyAny<'u>` also is, so it won't be possible
+    //     to shrink it.
+    let r: Cell<&'static i32> = unsafe { ::core::mem::transmute(r) };
+    Box::new(r)
+}
+```
+
+### Generalizing this pattern
+
+So, now that we have managed to handle a few non-`'static` cases, it is time to try to generalize
+these `we_do_a_lil_unsafe` operations: let's make it generic over some trait expressing the
+following "split a `'u`-infected type into `'u`, and a `'static`/non-`'u`-infected type.
+
+```rust ,ignore
+&'u i32 = Combine<'u, &'static i32>
+Cell<&'u i32> = Combine<'u, Cell<&'static i32>>
+// let's be able to add extra such associations with manual `impl`s
+```
+
+The idea being that the latter can be `dyn`-erased, and we make it so the former (`'u`) be kept
+around at compile-time at all times.
+
+```rust ,edition2018
+use ::core::any::TypeId;
+
+pub
+trait Apply<'lt> : 'static {
+    type Applied;
+}
+
+impl Apply<'_> for String {
+    type Applied = Self;
+}
+
+impl Apply<'_> for i32 {
+    type Applied = Self;
+}
+
+impl<'lt, T : Apply<'lt>> Apply<'lt> for &'static T {
+    type T = &'lt T::Applied;
+}
+
+impl<'lt, T : Apply<'lt>> Apply<'lt> for Cell<&'static T> {
+    type T = Cell<&'lt T::Applied>;
+}
+
+/// # Safety
+pub
+trait LtInfected<'lt> : 'lt {
+    type StaticSelf : Apply<'lt, Applied = Self>;
+
+    fn static_type_id() -> TypeId {
+        TypeId::of::<Self::StaticSelf>()
+    }
+}
+
+impl LtInfected<'_> for String {
+    type StaticSelf = Self;
+}
+
+impl LtInfected<'_> for i32 {
+    type StaticSelf = Self;
+}
+
+impl<'lt, T : LtInfected<'lt>> LtInfected<'lt> for &'lt T {
+    type StaticSelf = &'static T::StaticSelf;
+}
+
+impl<'lt, T : LtInfected<'lt>> LtInfected for Cell<&'lt T> {
+    type StaticSelf = Cell<&'static T::StaticSelf>;
+}
+
+mod seal {
+    use super::*;
+
+    pub trait Sealed<'lt> {}
+    impl<'lt, T : LtInfected<'lt>> Sealed<'lt> for T {}
+}
+
+pub
+trait MyAny<'lt> : seal::Sealed<'lt> {
+    fn dyn_static_type_id(&self) -> TypeId;
+}
+
+impl<'lt, T : LtInfected<'lt>> MyAny<'lt> for T {
+    fn dyn_static_type_id(&self) -> TypeId {
+        T::static_type_id()
+    }
+}
+
+impl dyn 'lt + MyAny<'lt> {
+    fn is<T : LtInfected<'lt>>(&self) -> bool {
+        self.dyn_static_type_id() == T::static_type_id()
+    }
+
+    fn downcast_ref<'r, T : LtInfected<'lt>>(
+        self: &'r (dyn 'lt + MyAny<'lt>),
+    ) -> Option<&'r T>
+    {
+        self.is::<T>().then(|| unsafe {
+            &*(self as *const Self as *const T)
+        })
+    }
+}
+
+fn coerce<'lt, T : LtInfected<'lt>>(
+    it: T,
+) -> Box<dyn 'lt + MyAny<'lt>>
+{
+    // Look: no unsafe!
+    Box::new(it) as _
+}
+```
