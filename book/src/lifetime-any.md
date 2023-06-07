@@ -1,4 +1,6 @@
-# Lifetime-infected `dyn Any` erasure
+# Motivation: lifetime-infected `dyn Any` erasure
+
+<!-- toc -->
 
 ### A brief introduction about `Any : 'static`
 
@@ -334,9 +336,7 @@ fn we_do_a_lil_unsafe<'u>(
 So, until now, we've been attempting to `dyn Any`-erase a `&'u i32`, but _quid_ of other
 `'u`-infected types?
 
-#### How well does this generalize to other lifetime-infected types?
-
-DRAGON BALL CELL PICTURE HERE
+#### How well does this generalize to another lifetime-infected type such as `Cell<&_>`?
 
 Let's consider, now, for instance, the type `Cell<&'u i32>`:
 
@@ -421,6 +421,15 @@ also have _another constraint_:
 
     ___
 
+  - In fact, I had to cheat a bit with that snippet to avoid running into a compile-error within my
+    `downcast_cell_ref` method because of this invariance!
+
+    Indeed, notice the `Cell<&i32>` used in the pointer casts, rather than `Cell<&'static i32>`:
+    given where I have used this type, contrary to other places where `&i32` was inferred to be
+    `&'static i32`, here it is directly inferred to be `Cell<&'u i32>`, since if `'static` were
+    picked or constrained by me, then we would have been unable to get back a `Cell<&'u i32>` out of
+    it.
+
 This means that now we need `'new_u` to be _exactly_ `'u`: if it ends up being _smaller_ than `'u`,
 we'll be able to implement the `fn unsound` above using `we_do_a_lil_unsafe_2()`.
 
@@ -461,12 +470,12 @@ be unsound (like our own very case, obviously, but not only that). This means th
 allowed to modify that `<'lt>` in any way: it will keep it exactly as it initially appears (we say
 that `dyn Trait<'lt>` is _invariant_ in `'lt`).
 
-  - Alas, the `<'lt>` parameter on `Trait`, the `+ 'usability` parameter is still needed for the
-    type, and `Box<dyn Trait<'lt>>` is sugar not for `Box<dyn Trait<'lt> + 'lt>` but for
-    `Box<dyn Trait<'lt> + 'static>`, which is a type that combines the worst of all worlds:
-      - the presence of `<'lt>` in the type makes it unable to be used beyond it ("infected by it");
+  - Alas, despite the `<'lt>` parameter on `Trait`, the `+ 'usability` parameter is still needed for
+    the type, and `Box<dyn Trait<'lt>>` is sugar not for `Box<dyn Trait<'lt> + 'lt>` but for
+    `Box<dyn Trait<'lt> + 'static>`, which is a type that combines the worst of both worlds:
+      - the presence of `<'lt>` in the type makes it unable to be used beyond it ("`'lt`-infected");
       - the presence of (the implicit) `+ 'static` makes coërcing a concrete type to it more
-        difficult.
+        difficult (_e.g._, `&'lt i32 : 'static` does not hold).
 
     In other words, you'd have to prove that your concrete type is `: 'static` only for that
     property to be immediately thrown out of the window because of `<'lt>`.
@@ -546,7 +555,12 @@ fn we_do_a_lil_unsafe_2<'u>(
 }
 ```
 
-### Generalizing this pattern
+<img
+    src="https://user-images.githubusercontent.com/9920355/244114830-19584c98-aabe-42d4-9406-e9649268901b.png"
+    height="200px"
+/>
+
+### Fully generalizing this pattern 🤯
 
 So, now that we have managed to handle a few non-`'static` cases, it is time to try to generalize
 these `we_do_a_lil_unsafe` operations: let's make it generic over some trait expressing the
@@ -561,94 +575,47 @@ Cell<&'u i32> = Combine<'u, Cell<&'static i32>>
 The idea being that the latter can be `dyn`-erased, and we make it so the former (`'u`) be kept
 around at compile-time at all times.
 
-```rust ,edition2018
-use ::core::any::TypeId;
+ 1. Express the `&'u i32 = Combine<'u, &'static i32>` intuition:
 
-pub
-trait Apply<'lt> : 'static {
-    type Applied;
-}
+    ```rust ,ignore
+    {{#include naive_any_example.rs:with-and-without-lifetime}}
+    ```
 
-impl Apply<'_> for String {
-    type Applied = Self;
-}
+    <details><summary>Bonus: the <code>Static</code> coherence wrapper</summary>
 
-impl Apply<'_> for i32 {
-    type Applied = Self;
-}
+    ```rust ,ignore
+    {{#include naive_any_example.rs:static}}
+    ```
 
-impl<'lt, T : Apply<'lt>> Apply<'lt> for &'static T {
-    type T = &'lt T::Applied;
-}
+    ___
 
-impl<'lt, T : Apply<'lt>> Apply<'lt> for Cell<&'static T> {
-    type T = Cell<&'lt T::Applied>;
-}
+    </details>
 
-/// # Safety
-pub
-trait LtInfected<'lt> : 'lt {
-    type StaticSelf : Apply<'lt, Applied = Self>;
+ 1. Now to tweak our `MyAny<'lt>` so as to no longer require `: 'static`
+    while still having access to `TypeId`s
 
-    fn static_type_id() -> TypeId {
-        TypeId::of::<Self::StaticSelf>()
-    }
-}
+    ```rust ,ignore
+    {{#include naive_any_example.rs:any}}
+    ```
 
-impl LtInfected<'_> for String {
-    type StaticSelf = Self;
-}
+ 1. From there, our `lil_unsafe` fns can be written _generically_, easily, and with no `unsafe`!
 
-impl LtInfected<'_> for i32 {
-    type StaticSelf = Self;
-}
+    ```rust ,ignore
+    {{#include naive_any_example.rs:coerce}}
+    ```
 
-impl<'lt, T : LtInfected<'lt>> LtInfected<'lt> for &'lt T {
-    type StaticSelf = &'static T::StaticSelf;
-}
+ 1. Demo:
 
-impl<'lt, T : LtInfected<'lt>> LtInfected for Cell<&'lt T> {
-    type StaticSelf = Cell<&'static T::StaticSelf>;
-}
+    ```rust ,ignore
+    {{#include naive_any_example.rs:main}}
+    ```
 
-mod seal {
-    use super::*;
+<details><summary>Click here to play with the full snippet</summary>
 
-    pub trait Sealed<'lt> {}
-    impl<'lt, T : LtInfected<'lt>> Sealed<'lt> for T {}
-}
-
-pub
-trait MyAny<'lt> : seal::Sealed<'lt> {
-    fn dyn_static_type_id(&self) -> TypeId;
-}
-
-impl<'lt, T : LtInfected<'lt>> MyAny<'lt> for T {
-    fn dyn_static_type_id(&self) -> TypeId {
-        T::static_type_id()
-    }
-}
-
-impl dyn 'lt + MyAny<'lt> {
-    fn is<T : LtInfected<'lt>>(&self) -> bool {
-        self.dyn_static_type_id() == T::static_type_id()
-    }
-
-    fn downcast_ref<'r, T : LtInfected<'lt>>(
-        self: &'r (dyn 'lt + MyAny<'lt>),
-    ) -> Option<&'r T>
-    {
-        self.is::<T>().then(|| unsafe {
-            &*(self as *const Self as *const T)
-        })
-    }
-}
-
-fn coerce<'lt, T : LtInfected<'lt>>(
-    it: T,
-) -> Box<dyn 'lt + MyAny<'lt>>
-{
-    // Look: no unsafe!
-    Box::new(it) as _
-}
+```rust ,edition2018,editable
+{{#include naive_any_example.rs:all}}
 ```
+
+___
+
+</details>

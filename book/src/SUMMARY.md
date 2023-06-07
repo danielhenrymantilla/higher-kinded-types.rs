@@ -8,7 +8,8 @@
 
 # Using HKTs for Fun and Profit™
 
-- [Lifetime-infected `dyn Any` erasure](lifetime-any.md)
+- [Motivation: lifetime-infected `dyn Any` erasure](lifetime-any.md)
+    - [Simple non-`'static` `dyn Any` with HKTs](lifetime-any-hkt.md)
 
 # Some Section
 

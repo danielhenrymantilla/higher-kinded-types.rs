@@ -4,3 +4,13 @@ language = "en"
 multilingual = false
 src = "src"
 title = "Higher-Kinded Types: a magical journey dancing with lifetimes"
+
+[rust]
+edition = "2021"   # the default edition for code blocks
+
+[output.html.playground]
+editable = true
+
+[preprocessor.toc]
+command = "mdbook-toc"
+renderer = ["html"]
