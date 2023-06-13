@@ -314,18 +314,26 @@ mod with_lifetime {
 ///     type Assoc<'lt>;
 /// }
 ///
+/// fn some_hkt_api<T: Gat>() {}
+///
 /// enum StrRef {}
 ///
 /// impl Gat for StrRef {
 ///     type Assoc<'lt> = &'lt str;
 /// }
+///
+/// some_hkt_api::<StrRef>();
 /// ```
 ///
 /// to:
 ///
 /// ```rust
-/// # use ::higher_kinded_types::Gat;
-/// type StrRef = Gat!(<'lt> = &'lt str);
+/// use ::higher_kinded_types::Gat;
+///
+/// fn some_hkt_api<T: Gat>() {}
+///
+/// // type StrRef = Gat!(<'lt> = &'lt str);
+/// some_hkt_api::<Gat!(&str)>();
 /// ```
 ///
 /// #### Conclusion
