@@ -126,16 +126,16 @@ where
     K : Ord,
 ```
 
-Now, if this is a detail you've never paid to much attention to, you should really stop, take a good
-moment to stare at this difference, trying to guess what the difference is: how is this differently
-quantified.
+Now, if this is a detail you've never paid too much attention to, you should really stop, take a
+good moment to stare at this change, trying to guess what the difference is: how is this differently
+quantified?
 
 ___
 
 The gist of it is the difference between "there exists x", spelled as `∃x` in mathematical shorthand
 notation, and "for any x" (also called "for all x", "for each x", "for every x"), spelled as `∀x`.
 
-  - Some basic examples of this to illustrate the difference:
+  - Let's illustrate the difference with some basic examples:
 
     ```rust ,ignore
     // there exists a(t least one) number x, such that x ≥ 0.
@@ -150,11 +150,11 @@ notation, and "for any x" (also called "for all x", "for each x", "for every x")
     ∀x: i32, x >= 0
     ```
 
-    which is `false`: there exists at least a(t least one) number `x` such that `x ≥ 0` not hold,
+    which is `false`: there exists a(t least one) number `x` such that `x ≥ 0` not hold,
     _i.e._, such that `x < 0`, _e.g._, `x = -1 `:
 
     ```rust ,ignore
-    x = -1
+    x = -1 ⇒ x < 0
     ⇒
     ∃x: i32, x < 0
     ⇔
@@ -186,7 +186,7 @@ can't!
 
 Whereas something like `∃x: i32, x >= 0`, would rather be:
 
-> Here is some `x` I can show you that holds the required property, to prove I was right!
+> Here is some `x` (_e.g._, `x=3`), as you can see it holds the required property.
 
 So, to summarize:
 
@@ -194,20 +194,34 @@ So, to summarize:
   - `∃x` / "there exists `x`": _you_ pick `x`, and your adversary better make do with it no matter
     _your_ choice!
 
-Back to the context of function signatures, **the outermost generic parameters** (such as `K` or the
-`F = impl FnMut…` parameters), **are picked by the caller**. So they are `∃`-quantified for them,
-while _the callee_ has to treat the choices of `K` and `F`, done by the "adversary" (the caller),
-as universal/`∀`-quantified "the caller may pick _any_ `K` or `F` they want!".
+___
+
+Back to the context of function signatures:
+
+```rust ,ignore
+//! pseudo-code.
+fn sort_by_key<K>(
+    self: &mut [T],
+    key_getter: impl FnMut<'item>(&'item T) -> K,
+)
+where
+    K : Ord,
+```
+
+**The outermost generic parameters** (such as `K` or the `F = impl FnMut…` parameters), **are picked
+by the caller**. So they are `∃`-quantified for them, while _the callee_ has to treat the choices of
+`K` and `F`, done by the "adversary" (the caller), as universal/`∀`-quantified "the caller may pick
+_any_ `K` or `F` they want!".
 
   - A funny way to observe this is to go on a forum/discord and ask if the type of `f` in
     `fn example(f: impl FnMut())` is existential or universal. This kind of question is incomplete
     (it depends on whether you are talking from the point of view of the caller, or of the callee),
     and as is usually the case for such ill-asked mathematical questions, you'll find that people
-    may rush to answer _their_ (implicit, and perhaps unconcious) choice of point of view, arguing
+    may rush to answer _their_ (implicit, and perhaps unconscious) choice of point of view, arguing
     with the others 😄
 
 So `K, F` are picked by the caller (they do have to uphold that their specific single choice of
-`F` and `K` do uphold that `F: FnMut…` and that `K: Ord`; from the point of view of the callee,
+`F` and `K` do uphold the `F: FnMut…` and `K: Ord` constraints; from the point of view of the callee,
 the `F` and `K` picked could be _any choice_, but _at least_ they know that `F: FnMut…` and `K: Ord`
 will hold).
 
@@ -230,8 +244,13 @@ What about `'item`? Well, that's the key difference between `sort_by_key_simpler
     ```
 
     This means that if the caller picks some `'item` (such as `'item = 'static`), they can _then_
-    pick `K` including it, _e.g._, `K = &'item String`, and _then_ an
-    `F = impl FnMut(&'item Client) -> &'item String` and all is good.
+    pick a `K` so that it includes this lifetime, _e.g._, `K = &'item String`, and _then_ an
+
+    ```rust ,ignore
+    F = impl FnMut(&'item Client) -> &'item String
+    ```
+
+    and all is good.
 
   - The latter, `fn sort_by_key`, on the other hand, **does not have `'item` amongst its _outermost_
     generic parameters**. It has `<'item>` amongst the generic parameters of the `impl FnMut<'item>`
@@ -242,27 +261,32 @@ What about `'item`? Well, that's the key difference between `sort_by_key_simpler
     //! pseudo-code (real syntax: `for<'item> FnMut(&'item T) -> K`)
     fn sort_by_key<K>(
         self: &mut [T],
-        key_getter: impl FnMut<'item>(&'item T) -> K,
+        cb: impl FnMut<'item>(&'item T) -> K,
         //                     ^^^^^   ^^^^^
     )
     where
         K : Ord,
     ```
 
-    This means that for a `fn cb()` definition to meet such a signature, it would have to be defined
-    as:
+    For a `fn cb()` definition to meet such a signature, it would have to be defined as:
 
     ```rust ,ignore
     fn cb<'item>(item: &'item Client) -> &'item String // for instance
     ```
 
-    and here we have an "outermost" generic parameters like we are used to. Which means it is picked
-    by the caller… **of `cb`**! And who is calling `cb` within `sort_by_key()`? The _body_ of
-    `sort_by_key()`, that is, the _callee_!
+    and here we have an "outermost" generic parameter like we are used to. Which means it is picked
+    by the caller. But who is the _caller_, here? We're talking of _the caller of `cb`_! Who is
+    calling `cb` within `sort_by_key()`? The _body_ of `sort_by_key()`, that is, the _callee_!
 
     In other words, the **`<'item>` _inner_ generic parameter is picked by the _callee_**, not the
-    caller! (from the point of view of the caller, it is thus a _universal_ lifetime parameter,
-    _i.e._, a "for all"-quantified one, hence the `for<'item>` syntax).
+    caller!
+
+      - From the point of view of the caller, it is thus a _universal_ lifetime parameter,
+        _i.e._, a "for all"-quantified one, hence the `for<'item>` syntax:
+
+        ```rust ,ignore
+        for/*any*/<'item> FnMut(&'item T) -> K
+        ```
 
     Now let's imagine a caller calling into `sort_by_key()`, and wanting the closure to return a
     `&String`:
@@ -274,9 +298,14 @@ What about `'item`? Well, that's the key difference between `sort_by_key_simpler
     ```
 
     See the problem? The return of our closure is `&'k String` for _some_ `'k` picked by the caller.
-    But what the closure will receiver, from the callee / the body of `sort_by_key`, is some
+    But what the closure will receive, from the callee / the body of `sort_by_key`, is some
     `&Client` **with some callee-chosen `'item` lifetime**, _which may very well be smaller than
-    `'k`!
+    `'k`_!
+
+      - To insist on this point, `'k` cannot be `'item`, because the former is picked by the caller,
+        whilst the latter is picked by the callee, "after" the caller, or independently from the
+        caller. So these are independent/distinctly-named lifetimes (and as we will see below,
+        it won't be possible for `'item : 'k` to hold, let alone `'k = 'item`).
 
       - To illustrate this, let's share again that error message above, but renaming `'1` as
         `'item`, and `'2` as `'k`:
@@ -291,8 +320,9 @@ What about `'item`? Well, that's the key difference between `sort_by_key_simpler
           |                 |     |
           |                 |     let's call the lifetime of this reference `'k`
           |                 has type `&'item Client`
-          // added by me:              ^^^^^ for some universal/higher-order/callee-chosen
-          //                                 `'item` lifetime.
+          // added by me:              ^^^^^
+          //            :          for some universal/higher-order/callee-chosen
+          //            :          `'item` lifetime.
         ```
 
           - In mathematical parlance, type-checking the lifetimes of the closure requires the
@@ -304,13 +334,15 @@ What about `'item`? Well, that's the key difference between `sort_by_key_simpler
             //  caller-chosen
             //  v                  ≥
                 ∃'k, ∀'item, 'item : 'k
-            //       ^
-            //       callee-chosen
+            //       ^             ^ from borrow-checking `&c.id`
+            //     callee-chosen
             ```
 
             which is `false`, hence the compilation error.
 
-            Another point of view related to this is that **caller-chosen lifetimes cannot be
+            ___
+
+            Another point of view, related to this, is that **caller-chosen lifetimes cannot be
             smaller than the scope of the `fn` body of the callee**:
 
             ```rust , ignore
@@ -380,24 +412,23 @@ that borrowing the input `&'item T` was not possible.
 So what about naming `'item` in the return type?
 
 ```rust ,edition2018
-use ::std::ord::Ord;
+use ::std::cmp::Ord;
 #
 # struct Client { id: String, tier: u8 }
 
 fn sort_by_key_ref<K : ?Sized> (
-    self: &'_ mut [Client],
-    key_getter: impl for<'item> FnMut(&'item Client) -> &'item K,
+    clients: &'_ mut [Client],
+    get_key: impl for<'item> FnMut(&'item Client) -> &'item K,
 )
 where
     // requirement for the caller: no matter the choice of `'item`
-    // by your "adversary" / the callee, `&'item K` needs to hold.
+    // by your "adversary" / the callee, `&'item K : Ord` needs to hold.
     // i.e., `∀'item, &'item K : Ord`:
     for<'item>
         &'item K : Ord
     ,
 {
-    let mut get_key = key_getter;
-    self.sort_by(|a: &Client, b: &Client| {
+    clients.sort_by(|a: &Client, b: &Client| {
         let ka = get_key(a);
         let kb = get_key(b);
         Ord::cmp(&ka, &kb)
@@ -405,7 +436,7 @@ where
 }
 
 fn sort_by_id(clients: &mut [Client]) {
-    clients.sort_by_key_ref(|client| &client.id); // OK 🥳
+    sort_by_key_ref(clients, |client| &client.id); // OK 🥳
 }
 #
 # fn main() { println!("✅"); }
@@ -416,12 +447,12 @@ This does work 🥳
 But what about the other example, sorting by `tier`?
 
 ```rust ,edition2018
-# use ::std::ord::Ord;
+# use ::std::cmp::Ord;
 #
 # struct Client { id: String, tier: u8 }
 #
 # fn sort_by_key_ref<K : ?Sized> (
-#     self: &'_ mut [Client],
+#     clients: &'_ mut [Client],
 #     key_getter: impl for<'item> FnMut(&'item Client) -> &'item K,
 # )
 # where
@@ -433,7 +464,7 @@ But what about the other example, sorting by `tier`?
 #     ,
 # {
 #     let mut get_key = key_getter;
-#     self.sort_by(|a: &Client, b: &Client| {
+#     clients.sort_by(|a: &Client, b: &Client| {
 #         let ka = get_key(a);
 #         let kb = get_key(b);
 #         Ord::cmp(&ka, &kb)
@@ -441,7 +472,7 @@ But what about the other example, sorting by `tier`?
 # }
 #
 fn sort_by_tier(clients: &mut [Client]) {
-    clients.sort_by_key_ref(|client| client.tier); // Error!
+    sort_by_key_ref(clients, |client| client.tier); // Error!
 }
 #
 # fn main() { println!("✅"); }
@@ -450,7 +481,17 @@ fn sort_by_tier(clients: &mut [Client]) {
 This fails with:
 
 ```rust ,ignore
-ERROR MESSAGE HERE
+error[E0308]: mismatched types
+  --> src/main.rs:26:39
+   |
+26 |     sort_by_key_ref(clients, |client| client.tier); // Error!
+   |                                       ^^^^^^^^^^^
+   |                                       |
+   |                                       expected `&_`, found `u8`
+   |                                       help: consider borrowing here: `&client.tier`
+   |
+   = note: expected reference `&_`
+                   found type `u8`
 ```
 
 since, indeed, our `-> u8` return type is no longer able to match our **less
@@ -470,25 +511,57 @@ But this is not fully satisfactory. Say, now, that we want to sort by `.tier`, b
 order_ (the `.sort_…` functionality always sorts in ascending order w.r.t. what `Ord` says).
 
 It turns out that there is a very handy adapter which swaps what `Ord` says, precisely to get
-_descending order_ for the wrapped values: `Reverse` TODO LINK.
+_descending order_ for the wrapped values: [`Reverse`](
+https://doc.rust-lang.org/stable/std/cmp/struct.Reverse.html)
+
+```rust ,ignore
+use ::core::cmp::Reverse;
+
+sort_by_key_ref(clients, |client| Reverse(&client.tier));
+```
+
+```rust ,ignore
+error[E0308]: mismatched types
+  --> src/main.rs:28:39
+   |
+28 | sort_by_key_ref(clients, |client| Reverse(&client.tier));
+   |                                   ^^^^^^^^^^^^^^^^^^^^^
+   |                                   |
+   |                                   expected `&_`, found `Reverse<&u8>`
+   |                                   help: consider borrowing here: `&Reverse(&client.tier)`
+   |
+   = note: expected reference `&_`
+                 found struct `Reverse<&u8>`
+```
+
+Ah, right, we need to return a borrow, so let's do what the diagnostic suggests:
 
 ```rust ,ignore
 use ::core::ord::Reverse;
 
-clients.sort_by_key_ref(|client| Reverse(client.tier));
+sort_by_key_ref(clients, |client| &Reverse(&client.tier));
+//                                👆
 ```
-
-Ah, right, we need to return a borrow:
 
 ```rust ,ignore
-use ::core::ord::Reverse;
-
-clients.sort_by_key_ref(|client| &Reverse(client.tier));
-//                               👆
+error[E0515]: cannot return reference to temporary value
+  --> src/main.rs:28:39
+   |
+28 | sort_by_key_ref(clients, |client| &Reverse(&client.tier));
+   |                                   ^--------------------
+   |                                   ||
+   |                                   |temporary value created here
+   |                                   returns a reference to data owned by the current function
 ```
 
+Hmmm
 
+<img
+  src="https://user-images.githubusercontent.com/9920355/246637508-5a96ab96-fa43-4f25-8f08-8993b2bd6bab.png"
+  height="150px"
+/>
 
-
+Yeah, true: wrapping value in `Reverse` creates a new _owned_ value (inside our `Reverse<T>`), which
+is created and owned by the closure's internal `fn` scope, so we return a borrow to it.
 
 ### Can we be _fully generic_ over the return type?
