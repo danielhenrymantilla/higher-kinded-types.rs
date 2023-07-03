@@ -1,7 +1,7 @@
 //! It turns out that `fn(Input<'_>) -> Output<'_>`, when you think about it,
 //! is also:
 //!   - a real Rust type;
-//!   - which conceptually expresses the `HKT!(Output<'_>)` property:
+//!   - which conceptually expresses the `For!(Output<'_>)` property:
 //!
 //! That is, one can feed a `'_` to it by feeding `Input<'_>` to the `FnOnce`
 //! trait, and then querying the resulting `Output` type.
@@ -51,7 +51,7 @@
 //! fn test<Ret : HKT>(_: impl FnOnce(&str) -> Ret::__<'_>)
 //! {}
 //!
-//! /// `HKT!(&str)`.
+//! /// `For!(&str)`.
 //! type StrRef = fn(For<'_>) -> &str;
 //!
 //! test::<A<StrRef>>(|s| s);

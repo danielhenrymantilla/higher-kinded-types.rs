@@ -1,5 +1,5 @@
 #[doc(hidden)] /** Not part of the public API */ #[macro_export]
-macro_rules! ඞHKT_munch {
+macro_rules! ඞFor_munch {
     // case `'_`
     (
         [output:
@@ -10,7 +10,7 @@ macro_rules! ඞHKT_munch {
             $($rest:tt)*
         ]
         $mode:tt
-    ) => ($crate::ඞHKT_munch! {
+    ) => ($crate::ඞFor_munch! {
         [output:
             $($acc)*
             'ඞ /* ' */
@@ -32,7 +32,7 @@ macro_rules! ඞHKT_munch {
             $($rest:tt)*
         ]
         $mode:tt
-    ) => ($crate::ඞHKT_munch! {
+    ) => ($crate::ඞFor_munch! {
         [output:
             $($acc)*
             &
@@ -52,7 +52,7 @@ macro_rules! ඞHKT_munch {
             $($rest:tt)*
         ]
         $mode:tt
-    ) => ($crate::ඞHKT_munch! {
+    ) => ($crate::ඞFor_munch! {
         $acc
         [input:
             // make it explicit
@@ -72,10 +72,10 @@ macro_rules! ඞHKT_munch {
             $($rest:tt)*
         ]
         $mode:tt
-    ) => ($crate::ඞHKT_munch! {
+    ) => ($crate::ඞFor_munch! {
         [output:
             $($acc)*
-            $crate::ඞHKT_munch! {
+            $crate::ඞFor_munch! {
                 [output: ]
                 [input: $($group)*]
                 [mode: parenthesized]
@@ -97,10 +97,10 @@ macro_rules! ඞHKT_munch {
             $($rest:tt)*
         ]
         $mode:tt
-    ) => ($crate::ඞHKT_munch! {
+    ) => ($crate::ඞFor_munch! {
         [output:
             $($acc)*
-            $crate::ඞHKT_munch! {
+            $crate::ඞFor_munch! {
                 [output: ]
                 [input: $($group)*]
                 [mode: square_bracketed]
@@ -124,7 +124,7 @@ macro_rules! ඞHKT_munch {
             $($rest:tt)*
         ]
         $mode:tt
-    ) => ($crate::ඞHKT_munch! {
+    ) => ($crate::ඞFor_munch! {
         [output:
             $($acc)*
             $otherwise

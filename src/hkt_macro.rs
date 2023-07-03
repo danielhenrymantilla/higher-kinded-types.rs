@@ -16,19 +16,20 @@ macro_rules! dispatch {($_:tt
         $(true $($if_cfg_fn_traits:tt)?)?
         $(false $($if_not_cfg_fn_traits:tt)?)?
 ) => (
-    /// Produce <code>impl [Gat]</code> types _on demand_.
+    /// Produce <code>impl [ForLt]</code>[^auto] types _on demand_.
     ///
-    /// [Gat]: trait@crate::Gat
+    /// [ForLt]: trait@crate::ForLt
+    /// [^auto]: `+ Send + Sync + Unpin`
     ///
     /// ### Syntax
     ///
     ///   - #### Full syntax
     ///
     ///     ```rust
-    ///     # use ::higher_kinded_types::Gat;
+    ///     # use ::higher_kinded_types::For;
     ///     # mod some { pub use ::std::borrow::Cow as Arbitrary; }
     ///     # use str as Type; let _:
-    ///     Gat!(<'r> = some::Arbitrary<'r, Type>);
+    ///     For!(<'r> = some::Arbitrary<'r, Type>);
     ///     # ;
     ///     ```
     ///
@@ -39,10 +40,10 @@ macro_rules! dispatch {($_:tt
     ///     just write:
     ///
     ///     ```rust
-    ///     # use ::higher_kinded_types::Gat;
+    ///     # use ::higher_kinded_types::For;
     ///     # mod some { pub use ::std::borrow::Cow as Arbitrary; }
     ///     # use str as Type; let _:
-    ///     Gat!(some::Arbitrary<'_, Type>);
+    ///     For!(some::Arbitrary<'_, Type>);
     ///     # ;
     ///     ```
     ///
@@ -51,51 +52,52 @@ macro_rules! dispatch {($_:tt
     /// ```rust
     /// use ::higher_kinded_types::*;
     ///
-    /// type A = Gat!(<'r> = &'r str);
+    /// type A = For!(<'r> = &'r str);
     /// // the following two definitions are equivalent to A (syntax sugar).
-    /// type B = Gat!(&'_ str);
-    /// type C = Gat!(&str);
+    /// type B = For!(&'_ str);
+    /// type C = For!(&str);
     ///
-    /// //            let `'r` be `'static`; this results in…
-    /// //                    vvvvvvv
-    /// let a: <A as Gat>::__<'static> = "a";
-    /// //     ^^^^^^^^^^^^^^^^^^^^^^^
-    /// //        … `&'static str` !
-    /// //     vvvvvvvvvvvvvvvvvvvvvvv
-    /// let b: <B as Gat>::__<'static> = "b";
-    /// let c: <C as Gat>::__<'static> = "c";
+    /// //     Let `'r` be `'static`, this results in:
+    /// //                      |
+    /// //                      vvvvvvv
+    /// let a: <A as ForLt>::Of<'static> = "a";
+    /// //     ^^^^^^^^^^^^^^^^^^^^^^^^^
+    /// //          `&'static str` !
+    /// //     vvvvvvvvvvvvvvvvvvvvvvvvv
+    /// let b: <B as ForLt>::Of<'static> = "b";
+    /// let c: <C as ForLt>::Of<'static> = "c";
     /// ```
     #[macro_export]
-    macro_rules! Gat {
+    macro_rules! For {
         (
-            // Named lifetime case: e.g. `Gat!(<'r> = &'r str)`.
+            // Named lifetime case: e.g. `For!(<'r> = &'r str)`.
             <$lt:lifetime> = $T:ty $_(,)?
         ) => (
             $($($if_cfg_fn_traits)?
-                $_ crate::ඞ::Gat<
-                    for<$lt> fn($_ crate::ඞ::__<$lt>) -> $T
+                $_ crate::ඞ::ForLt<
+                    for<$lt> fn($_ crate::ඞ::Of<$lt>) -> $T
                 >
             )?
             $($($if_not_cfg_fn_traits)?
-                $_ crate::ඞ::Gat<
+                $_ crate::ඞ::ForLt<
                     dyn for<$lt> $_ crate::ඞ::WithLifetime<$lt, T = $T>,
                 >
             )?
         );
 
         (
-            // default case: as if we had `Gat!(<'_> = $($input)*)`.
-            // For instance: `Gat!(&str)` or `Gat!(&'_ str)`.
+            // default case: as if we had `For!(<'_> = $($input)*)`.
+            // For instance: `For!(&str)` or `For!(&'_ str)`.
             $_($input:tt)*
         ) => (
             $($($if_cfg_fn_traits)?
-                $_ crate::ඞ::Gat<
+                $_ crate::ඞ::ForLt<
                     fn($_ crate::ඞ::r#for<'_>) -> $_($input)*
                 >
             )?
             $($($if_not_cfg_fn_traits)?
-                $_ crate::Gat! {
-                    <'ඞ /* ' */> = $_ crate::ඞGat_munch! {
+                $_ crate::For! {
+                    <'ඞ /* ' */> = $_ crate::ඞFor_munch! {
                         [output: ]
                         [input: $_($input)*]
                         [mode: default]
@@ -107,4 +109,4 @@ macro_rules! dispatch {($_:tt
 )}
 use dispatch;
 
-pub use Gat;
+pub use For;

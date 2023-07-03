@@ -1,27 +1,27 @@
 //! Niche and advanced, you can ignore this to begin with.
 //! Module for type-equality hacks.
 //!
-//! In certain scenarios, you may have a `T : HKT` in scope which you want to
+//! In certain scenarios, you may have a `T : ForLt` in scope which you want to
 //! constrain to match some specific type when fed some specific lifetime;
 //! _e.g._
 //!
 //! ```rust ,ignore
 //! //! pseudo-code
-//! <'r, T : HKT>
+//! <'r, T : ForLt>
 //! where
-//!     T::__<'r> = &'r str
+//!     T::Of<'r> = &'r str
 //! ```
 //!
 //! In that case, you can actually just write the corresponding real code:
 //!
 //! ```rust
-//! # use ::higher_kinded_types::HKT;
+//! # use ::higher_kinded_types::ForLt;
 //! #
-//! fn f<'s, T : HKT>(s: &'s str)
+//! fn f<'s, T : ForLt>(s: &'s str)
 //! where
-//!     T : HKT<__<'s> = &'s str>,
+//!     T : ForLt<Of<'s> = &'s str>,
 //! {
-//!     let _: T::__<'s> = s;
+//!     let _: T::Of<'s> = s;
 //! }
 //! ```
 //!
@@ -30,13 +30,13 @@
 //! It even works with higher-order lifetimes!
 //!
 //! ```rust
-//! # use ::higher_kinded_types::HKT;
+//! # use ::higher_kinded_types::ForLt;
 //! #
-//! fn f<T : HKT>(s: String)
+//! fn f<T : ForLt>(s: String)
 //! where
-//!     T : for<'local> HKT<__<'local> = &'local str>,
+//!     T : for<'local> ForLt<Of<'local> = &'local str>,
 //! {
-//!     let _local: T::__<'_> = &s;
+//!     let _local: T::Of<'_> = &s;
 //! }
 //! ```
 //!
@@ -57,31 +57,31 @@
 //!
 //! Rust will nonetheless still be treating `T` and `U` as distinct types.
 //!
-//! Which is why this module provides helper [`cast_into()`] and [`cast_from()`]
+//! Which is why this module provides helper [`cast_right()`] and [`cast_left()`]
 //! functions:
 //!
 //! ```rust
-//! use ::higher_kinded_types::{HKT, type_eq::{self, Is}};
+//! use ::higher_kinded_types::{ForLt, type_eq::{self, Is}};
 //!
-//! fn f<'a, T : HKT>(a: &'a str)
+//! fn f<'a, T : ForLt>(a: &'a str)
 //! where
-//!     T::__<'a> : Is<EqTo = &'a str>,
+//!     T::Of<'a> : Is<EqTo = &'a str>,
 //! {
-//!     let _: T::__<'a> = type_eq::cast_from::<T::__<'a>>(a);
+//!     let _: T::Of<'a> = type_eq::cast_left::<T::Of<'a>>(a);
 //! }
 //! ```
 //!
-//! But perhaps more interestingly, [`cast_into()`] and [`cast_from()`] are
+//! But perhaps more interestingly, [`cast_right()`] and [`cast_left()`] are
 //! unable to handle _types depending on `T`_, such as `Vec<T>` _vs._ `Vec<U>`.
 //!
 //! That's when we'd like to use "generic-_over-a-type_ generics", that is,
-//! _type_ HKTs!
+//! _type_ GATs!
 //!
 //! …ish: while they're not fully supported (no ergonomic instantiation), it can
 //! be intellectually interesting to notice that once we let go of ergonomics,
 //! there can be actual usages of type ~~"HKTs"~~ GATs.
 //!
-//! See, for instance, the [`TypeGat`] trait and documentation example.
+//! See, for instance, the [`ForType`] trait and documentation example.
 
 pub
 trait Is {
@@ -92,8 +92,10 @@ impl<T : ?Sized> Is for T {
     type EqTo = Self;
 }
 
+/// Given <code>T : [Is]\<EqTo = U\></code>, it allows safely converting any
+/// value of type `T` into a value of type `U`.
 pub
-fn cast_into<T>(it: T)
+fn cast_right<T>(it: T)
   -> <T as Is>::EqTo
 {
     // For those reading this code and curious about what this function even
@@ -109,9 +111,9 @@ fn cast_into<T>(it: T)
     //
     //  2. In a `T : Is<EqTo = U>`-bounded scenario, Rust "forgets" about the
     //     outer blanket impl, which is why it will not type-unify these two
-    //     things; on the other hand, it still knows of this generic `cast_into`
+    //     things; on the other hand, it still knows of this generic `cast_right`
     //     function, where it can replace the parameters with the properties
-    //     it knows. It thus becomes: `fn cast_into<T>(it: T) -> U;` at the
+    //     it knows. It thus becomes: `fn cast_right<T>(it: T) -> U;` at the
     //     call-site (remember, the body is type-checked *here*, not at
     //     call-sites), and things Just Work™.
     //
@@ -121,15 +123,19 @@ fn cast_into<T>(it: T)
     it
 }
 
+/// Like [`cast_right()`], but from `T::EqTo` to `T` this time.
+///
+/// Given <code>T : [Is]\<EqTo = U\></code>, it allows safely converting any
+/// value of type `U` into a value of type `T`.
 pub
-fn cast_from<T>(it: <T as Is>::EqTo)
+fn cast_left<T>(it: <T as Is>::EqTo)
   -> T
 {
     it
 }
 
 /// ```rust
-/// use ::higher_kinded_types::type_eq::{Is, TypeGat};
+/// use ::higher_kinded_types::type_eq::{Is, ForType};
 ///
 /// fn demo<T : Is<EqTo = u32>>(
 ///     v: Vec<T>,
@@ -137,7 +143,7 @@ fn cast_from<T>(it: <T as Is>::EqTo)
 /// {
 ///     enum Vec_ {}
 ///
-///     impl TypeGat for Vec_ {
+///     impl ForType for Vec_ {
 ///         type Of<T> = Vec<T>;
 ///     }
 ///
@@ -145,7 +151,7 @@ fn cast_from<T>(it: <T as Is>::EqTo)
 /// }
 /// ```
 pub
-trait TypeGat {
+trait ForType {
     type Of<T>;
 
     fn cast_into<T>(
