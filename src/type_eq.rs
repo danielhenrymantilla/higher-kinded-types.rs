@@ -81,7 +81,10 @@
 //! be intellectually interesting to notice that once we let go of ergonomics,
 //! there can be actual usages of type ~~"HKTs"~~ GATs.
 //!
-//! See, for instance, the [`ForType`] trait and documentation example.
+//! See, for instance, [`cast_wrapper_right`] and its documentation example.
+
+#[doc(no_inline)]
+pub use crate::other_arities::ForTy as ForType;
 
 pub
 trait Is {
@@ -134,38 +137,39 @@ fn cast_left<T>(it: <T as Is>::EqTo)
     it
 }
 
+/// Given <code>T : [Is]\<EqTo = U\></code>, it allows safely converting any
+/// value of type <code>Wrapper[::Of]\<T\></code> into a value of type
+/// `Wrapper::Of<U>`.
+///
+/// [::Of]: ForType
+///
 /// ```rust
-/// use ::higher_kinded_types::type_eq::{Is, ForType};
+/// use ::higher_kinded_types::type_eq::{cast_wrapper_right, Is, ForType};
 ///
 /// fn demo<T : Is<EqTo = u32>>(
 ///     v: Vec<T>,
 /// ) -> Vec<u32>
 /// {
-///     enum Vec_ {}
-///
-///     impl ForType for Vec_ {
+///     enum Vec_ {} impl ForType for Vec_ {
 ///         type Of<T> = Vec<T>;
 ///     }
 ///
-///     Vec_::cast_into(v)
+///     cast_wrapper_right::<Vec_, _>(v)
 /// }
 /// ```
 pub
-trait ForType {
-    type Of<T>;
+fn cast_wrapper_right<Wrapper: ForType, T>(
+    it: Wrapper::Of<T>,
+) -> Wrapper::Of<<T as Is>::EqTo>
+{
+    it
+}
 
-    fn cast_into<T>(
-        it: Self::Of<T>,
-    ) -> Self::Of<<T as Is>::EqTo>
-    {
-        it
-    }
-
-
-    fn cast_from<T>(
-        it: Self::Of<<T as Is>::EqTo>,
-    ) -> Self::Of<T>
-    {
-        it
-    }
+/// Like [`cast_wrapper_right()`], but from `T::EqTo` to `T` this time.
+pub
+fn cast_wrapper_left<Wrapper: ForType, T>(
+    it: Wrapper::Of<<T as Is>::EqTo>,
+) -> Wrapper::Of<T>
+{
+    it
 }

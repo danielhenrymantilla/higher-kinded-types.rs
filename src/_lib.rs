@@ -62,6 +62,12 @@ use {
     },
 };
 
+#[cfg_attr(feature = "better-docs",
+    doc(cfg(advanced)),
+)]
+pub
+mod other_arities;
+
 #[cfg(feature = "fn_traits")]
 mod fn_traits;
 
