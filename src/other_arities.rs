@@ -10,19 +10,23 @@
 #[doc(no_inline)]
 pub use crate::ForLt;
 
-pub trait ForTy {
+pub
+trait ForTy {
     type Of<T>;
 }
 
-pub trait ForLtAndLt {
+pub
+trait ForLtAndLt {
     type Of<'a, 'b>;
 }
 
-pub trait ForUnsizedTy {
+pub
+trait ForUnsizedTy {
     type Of<T : ?Sized>;
 }
 
-pub trait ForLtAndTy {
+pub
+trait ForLtAndTy {
     type Of<'lt, T>;
 }
 
