@@ -98,7 +98,7 @@ trait ForLtAndTy : Send + Sync + Unpin {
 ///     # ;
 ///     ```
 ///
-///       - Notice how there deliberately is not _shorthand syntax_ available
+///       - Notice how there deliberately is no _shorthand syntax_ available
 ///         (for the sake of readability). Use [`crate::ForLt!`] for that.
 ///
 ///   - #### `ForLtAndLt`
