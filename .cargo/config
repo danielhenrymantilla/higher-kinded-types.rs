@@ -1,3 +1,14 @@
-# Templated by `cargo-generate` using https://github.com/danielhenrymantilla/proc-macro-template
 [alias]
+# `cargo test-all && cargo +nightly docs-rs` is a nice workflow.
+test-all = ["test", "--features", "better-docs"]
+docs-rs = ["doc", "--no-deps", "--profile", "docs", "--features", "docs-rs", "--open"]
+
 test-ui = ["test", "--doc", "--features", "ui-tests", "--", "--nocapture", "--test-threads", "1"]
+
+[build]
+rustdocflags = [
+    "--html-before-content", "fix-docsrs-li-details-summary.html",
+]
+
+[profile.docs]
+inherits = "dev"

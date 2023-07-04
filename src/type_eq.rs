@@ -83,8 +83,7 @@
 //!
 //! See, for instance, [`cast_wrapper_right`] and its documentation example.
 
-#[doc(no_inline)]
-pub use crate::other_arities::ForTy as ForType;
+use crate::extra_arities::ForTy as ForType;
 
 pub
 trait Is {
@@ -144,17 +143,20 @@ fn cast_left<T>(it: <T as Is>::EqTo)
 /// [::Of]: ForType
 ///
 /// ```rust
-/// use ::higher_kinded_types::type_eq::{cast_wrapper_right, Is, ForType};
+/// use ::higher_kinded_types::{
+///     extra_arities::{For, new_For_type},
+///     type_eq::{cast_wrapper_right, Is},
+/// };
 ///
 /// fn demo<T : Is<EqTo = u32>>(
 ///     v: Vec<T>,
 /// ) -> Vec<u32>
 /// {
-///     enum Vec_ {} impl ForType for Vec_ {
-///         type Of<T> = Vec<T>;
+///     new_For_type! {
+///         type Vec_ = For!(<T> = Vec<T>);
 ///     }
 ///
-///     cast_wrapper_right::<Vec_, _>(v)
+///     cast_wrapper_right::<Vec_, T>(v)
 /// }
 /// ```
 pub

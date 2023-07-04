@@ -7,7 +7,7 @@ name = "higher-kinded-types"
 authors = [
     "Daniel Henry-Mantilla <daniel.henry.mantilla@gmail.com>",
 ]
-version = "0.1.0-rc4"  # Keep in sync
+version = "0.1.0"  # Keep in sync
 edition = "2021"
 
 license = "Zlib OR MIT OR Apache-2.0"
@@ -23,7 +23,7 @@ docs-rs = [
     "better-docs",
     "fn_traits",
 ]
-better-docs = [  # allowed to break MSRV
+better-docs = [  # unstable; it is not to be enabled by users!
 ]
 ui-tests = [
     "better-docs",

@@ -26,10 +26,10 @@ macro_rules! dispatch {($_:tt
     ///   - #### Full syntax
     ///
     ///     ```rust
-    ///     # use ::higher_kinded_types::For;
+    ///     # use ::higher_kinded_types::ForLt;
     ///     # mod some { pub use ::std::borrow::Cow as Arbitrary; }
     ///     # use str as Type; let _:
-    ///     For!(<'r> = some::Arbitrary<'r, Type>);
+    ///     ForLt!(<'r> = some::Arbitrary<'r, Type>)
     ///     # ;
     ///     ```
     ///
@@ -40,22 +40,22 @@ macro_rules! dispatch {($_:tt
     ///     just write:
     ///
     ///     ```rust
-    ///     # use ::higher_kinded_types::For;
+    ///     # use ::higher_kinded_types::ForLt;
     ///     # mod some { pub use ::std::borrow::Cow as Arbitrary; }
     ///     # use str as Type; let _:
-    ///     For!(some::Arbitrary<'_, Type>);
+    ///     ForLt!(some::Arbitrary<'_, Type>)
     ///     # ;
     ///     ```
     ///
     /// ### Examples
     ///
     /// ```rust
-    /// use ::higher_kinded_types::*;
+    /// use ::higher_kinded_types::ForLt;
     ///
-    /// type A = For!(<'r> = &'r str);
+    /// type A = ForLt!(<'r> = &'r str);
     /// // the following two definitions are equivalent to A (syntax sugar).
-    /// type B = For!(&'_ str);
-    /// type C = For!(&str);
+    /// type B = ForLt!(&'_ str);
+    /// type C = ForLt!(&str);
     ///
     /// //     Let `'r` be `'static`, this results in:
     /// //                      |
@@ -68,14 +68,14 @@ macro_rules! dispatch {($_:tt
     /// let c: <C as ForLt>::Of<'static> = "c";
     /// ```
     #[macro_export]
-    macro_rules! For {
+    macro_rules! ForLt {
         (
-            // Named lifetime case: e.g. `For!(<'r> = &'r str)`.
+            // Named lifetime case: e.g. `ForLt!(<'r> = &'r str)`.
             <$lt:lifetime> = $T:ty $_(,)?
         ) => (
             $($($if_cfg_fn_traits)?
                 $_ crate::ඞ::ForLt<
-                    for<$lt> fn($_ crate::ඞ::Of<$lt>) -> $T
+                    for<$lt> fn($_ crate::ඞ::__<$lt>) -> $T
                 >
             )?
             $($($if_not_cfg_fn_traits)?
@@ -86,20 +86,20 @@ macro_rules! dispatch {($_:tt
         );
 
         (
-            // default case: as if we had `For!(<'_> = $($input)*)`.
-            // For instance: `For!(&str)` or `For!(&'_ str)`.
-            $_($input:tt)*
+            // default case: as if we had `ForLt!(<'_> = $($input)*)`.
+            // For instance: `ForLt!(&str)` or `ForLt!(&'_ str)`.
+            $_($shorthand_syntax:tt)*
         ) => (
             $($($if_cfg_fn_traits)?
                 $_ crate::ඞ::ForLt<
-                    fn($_ crate::ඞ::r#for<'_>) -> $_($input)*
+                    fn($_ crate::ඞ::r#for<'_>) -> $_($shorthand_syntax)*
                 >
             )?
             $($($if_not_cfg_fn_traits)?
-                $_ crate::For! {
-                    <'ඞ /* ' */> = $_ crate::ඞFor_munch! {
+                $_ crate::ForLt! {
+                    <'ඞ /* ' */> = $_ crate::ඞForLt_munch! {
                         [output: ]
-                        [input: $_($input)*]
+                        [input: $_($shorthand_syntax)*]
                         [mode: default]
                     }
                 }
@@ -108,5 +108,3 @@ macro_rules! dispatch {($_:tt
     }
 )}
 use dispatch;
-
-pub use For;

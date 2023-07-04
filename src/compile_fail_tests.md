@@ -1,9 +1,11 @@
 # The following snippets fail to compile
 
-```rust ,compile_fail
-use ::higher_kinded_types::*;
+## `For!` requires `new_For_type!` around it
 
-/* todo */
+```rust ,compile_fail
+use ::higher_kinded_types::prelude::*;
+
+type Vec_ = For!(<T> = Vec<T>);
 ```
 
 <!-- Templated by `cargo-generate` using https://github.com/danielhenrymantilla/proc-macro-template -->
