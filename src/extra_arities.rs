@@ -50,7 +50,7 @@ trait ForTy : Send + Sync + Unpin {
 ///         task::Context,
 ///     },
 ///     ::higher_kinded_types::{
-///         other_arities::*,
+///         extra_arities::*,
 ///     },
 /// };
 ///
@@ -91,7 +91,7 @@ trait ForLtAndTy : Send + Sync + Unpin {
 ///   - #### `ForLt`
 ///
 ///     ```rust
-///     # use ::higher_kinded_types::other_arities::For;
+///     # use ::higher_kinded_types::extra_arities::For;
 ///     # mod some { pub use ::std::borrow::Cow as Arbitrary; }
 ///     # use str as Type; let _:
 ///     For!(<'r> = some::Arbitrary<'r, Type>)
@@ -104,7 +104,7 @@ trait ForLtAndTy : Send + Sync + Unpin {
 ///   - #### `ForLtAndLt`
 ///
 ///     ```rust
-///     # use ::higher_kinded_types::other_arities::For;
+///     # use ::higher_kinded_types::extra_arities::For;
 ///     # mod some { pub type Arbitrary<'a, 'b, T> = &'a &'b T; }
 ///     # use str as Type; let _:
 ///     For!(<'a, 'b> = some::Arbitrary<'a, 'b, Type>)
@@ -178,7 +178,7 @@ new_For_type! {
         $pub
         struct $Name(fn(&()) -> &mut Self);
 
-        impl $crate::other_arities::ForTy for $Name {
+        impl $crate::extra_arities::ForTy for $Name {
             type Of<$T> = $Type;
         }
     );
@@ -192,7 +192,7 @@ new_For_type! {
         $pub
         struct $Name(fn(&()) -> &mut Self);
 
-        impl $crate::other_arities::ForLtAndTy for $Name {
+        impl $crate::extra_arities::ForLtAndTy for $Name {
             type Of<$lt, $T : $lt> = $Type;
         }
     );
@@ -203,7 +203,7 @@ new_For_type! {
         < $($rest:tt)*
     ) => (
         $(#$attr)*
-        $pub type $Name = $crate::other_arities::For!(< $($rest)* );
+        $pub type $Name = $crate::extra_arities::For!(< $($rest)* );
     );
 }
 
@@ -217,7 +217,7 @@ new_For_type! {
 /// ### `ForTy`
 ///
 /// ```rust
-/// use ::higher_kinded_types::other_arities::*;
+/// use ::higher_kinded_types::extra_arities::*;
 ///
 /// new_For_type! {
 ///     /// Attributes such as docstrings are obviously allowed.
@@ -251,7 +251,7 @@ new_For_type! {
 /// ### `ForLtAndTy`
 ///
 /// ```rust
-/// use ::higher_kinded_types::other_arities::*;
+/// use ::higher_kinded_types::extra_arities::*;
 ///
 /// new_For_type! {
 ///     type SharedRef = For!(<'r, T> = &'r T);

@@ -21,7 +21,7 @@ mod prelude {
     pub use crate::{
         ForLt,
         ForLifetime,
-        other_arities::*,
+        extra_arities::*,
     };
 }
 
@@ -31,7 +31,7 @@ mod ඞ {
     pub use {
         ::core, // or `std`
         crate::{
-            other_arities::{
+            extra_arities::{
                 for_lt_and_lt::WithLifetimes,
             },
             with_lifetime::{
@@ -76,7 +76,7 @@ use {
     doc(cfg(advanced)),
 )]
 pub
-mod other_arities;
+mod extra_arities;
 
 #[cfg(feature = "fn_traits")]
 mod fn_traits;
@@ -146,7 +146,7 @@ mod with_lifetime {
 ///   - "Arrow-Kinded Type": `… -> *`, such as `ForLt!(<'a> = &'a str) : ForLt`.
 ///   - Higher-Kinded Type: `(… -> *) -> *`, such as `struct Example<T : ForLt>`.
 ///
-/// [`: For`-bounded]: other_arities/index.html
+/// [`: For`-bounded]: extra_arities/index.html
 ///
 /// [ForLt]: trait@ForLt
 /// [`ForLt`]: trait@ForLt
