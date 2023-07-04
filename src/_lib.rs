@@ -470,7 +470,10 @@ pub use ForLifetime as ForLt;
 
 mod seal {
     pub trait Sealed : Send + Sync + Unpin {}
+    #[cfg(not(feature = "better-docs"))]
     impl<T : ?Sized> Sealed for crate::ඞ::ForLt<T> {}
+    #[cfg(feature = "better-docs")]
+    impl<T : ?Sized> Sealed for T where Self : Send + Sync + Unpin {}
 }
 
 #[doc(hidden)]

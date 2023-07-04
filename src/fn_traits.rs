@@ -35,6 +35,7 @@
 //! {
 //!     type T = F::Ret;
 //! }
+//!
 //!     trait MyFnOnce<A>
 //!     where
 //!         Self : FnOnce(A) -> Self::Ret,
@@ -48,7 +49,7 @@
 //!         type Ret = R;
 //!     }
 //!
-//! fn test<Ret : HKT>(_: impl FnOnce(&str) -> Ret::__<'_>)
+//! fn test<Ret : ForLt>(_: impl FnOnce(&str) -> Ret::Of<'_>)
 //! {}
 //!
 //! /// `For!(&str)`.

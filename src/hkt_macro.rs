@@ -75,7 +75,7 @@ macro_rules! dispatch {($_:tt
         ) => (
             $($($if_cfg_fn_traits)?
                 $_ crate::ඞ::ForLt<
-                    for<$lt> fn($_ crate::ඞ::Of<$lt>) -> $T
+                    for<$lt> fn($_ crate::ඞ::__<$lt>) -> $T
                 >
             )?
             $($($if_not_cfg_fn_traits)?

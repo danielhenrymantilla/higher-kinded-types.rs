@@ -23,7 +23,7 @@ docs-rs = [
     "better-docs",
     "fn_traits",
 ]
-better-docs = [  # allowed to break MSRV
+better-docs = [  # unstable; it is not to be enabled by users!
 ]
 ui-tests = [
     "better-docs",
