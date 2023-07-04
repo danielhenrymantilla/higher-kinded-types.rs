@@ -310,14 +310,36 @@ new_For_type! {
 ///         .for_each(|(i, x)| f(i, x))
 /// }
 ///
-/// let vec = &mut vec![16, 42, 0];
-/// vec_for_each::<i32, ExclusiveRef>(vec, |_, x| *x += 27);
-/// vec_for_each::<i32, SharedRef>(vec, |i, &x| {
+/// let mut vec = vec![16, 42, 0];
+/// vec_for_each::<i32, ExclusiveRef>(&mut vec, |_, x| *x += 27);
+/// vec_for_each::<i32, SharedRef>(&vec, |i, &x| {
 ///     println!("{x}");
 ///     if i == 1 {
 ///         assert_eq!(x, 42 + 27);
 ///     }
 /// });
+///
+/// // Actually, usage of `'r` is not mandatory:
+/// new_For_type! {
+///     type Owned = For!(<'r, T> = T);
+/// }
+///
+/// impl<T> IterMaybeMut<Owned> for Vec<T> {
+///     type Item = T;
+///
+///     fn iter<'r>(this: Vec<T>)
+///       -> Box<dyn 'r + Iterator<Item = T>>
+///     where
+///         Self : 'r,
+///         Self::Item : 'r,
+///     {
+///         Box::new(this.into_iter())
+///     }
+/// }
+///
+/// //                                          owned!
+/// //                                          vvv
+/// vec_for_each::<i32, Owned>(vec, |_, _owned: i32| {});
 /// ```
 #[macro_export] #[doc(hidden)]
 macro_rules! ඞnew_For_type {(
