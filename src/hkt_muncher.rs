@@ -28,7 +28,7 @@ macro_rules! ඞForLt_munch {
         ]
         [input:
             &
-            '_
+            $lt:lifetime
             $($rest:tt)*
         ]
         $mode:tt
@@ -38,7 +38,7 @@ macro_rules! ඞForLt_munch {
             &
         ]
         [input:
-            '_
+            $lt
             $($rest)*
         ]
         $mode

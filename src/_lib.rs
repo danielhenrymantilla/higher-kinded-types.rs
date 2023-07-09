@@ -1,7 +1,7 @@
 //! [ForLifetime]: trait@ForLifetime
 #![doc = include_str!("../README.md")]
 #![no_std]
-#![forbid(unsafe_code)]
+#![deny(unsafe_code)]
 #![allow(type_alias_bounds, uncommon_codepoints)]
 #![allow(
     // in case `crate::ForLt!` does not resolve, we have the `crate::hkt_macro::*` fallback.
@@ -87,6 +87,12 @@ pub use hkt_macro::*;
 mod hkt_macro;
 
 mod hkt_muncher;
+
+#[cfg_attr(feature = "docs-rs",
+    doc(cfg(example)),
+)]
+pub
+mod soul_split;
 
 #[cfg_attr(feature = "docs-rs",
     doc(cfg(advanced)),
@@ -549,3 +555,50 @@ type ForRefMut<T : ?Sized> = ForLt!(&'_ mut T);
 #[cfg(feature = "ui-tests")]
 #[doc = include_str!("compile_fail_tests.md")]
 mod _compile_fail_tests {}
+
+extern crate self as maybe_dangling;
+
+pub
+struct ManuallyDrop<T>(
+    ::core::mem::MaybeUninit<T>,
+);
+
+#[allow(unsafe_code)]
+impl<T> ManuallyDrop<T> {
+    pub
+    fn new(value: T)
+      -> Self
+    {
+        Self(::core::mem::MaybeUninit::new(value))
+    }
+
+    pub
+    unsafe
+    fn take(this: &mut Self) -> T {
+        unsafe {
+            <*const T>::read(&**this)
+        }
+    }
+
+    pub
+    fn into_inner(this: Self) -> T {
+        unsafe {
+            this.0.assume_init()
+        }
+    }
+}
+
+#[allow(unsafe_code)]
+impl<T> ::core::ops::DerefMut for ManuallyDrop<T> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        impl<T> ::core::ops::Deref for ManuallyDrop<T> {
+            type Target = T;
+
+            fn deref(&self) -> &Self::Target {
+                unsafe { self.0.assume_init_ref() }
+            }
+        }
+
+        unsafe { self.0.assume_init_mut() }
+    }
+}

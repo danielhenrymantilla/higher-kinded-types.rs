@@ -10,7 +10,7 @@ https://crates.io/crates/higher-kinded-types)
 https://docs.rs/higher-kinded-types)
 [![MSRV](https://img.shields.io/badge/MSRV-1.65.0-white)](
 https://gist.github.com/danielhenrymantilla/8e5b721b3929084562f8f65668920c33)
-[![unsafe forbidden](https://img.shields.io/badge/unsafe-forbidden-success.svg)](
+[![unsafe denied](https://img.shields.io/badge/unsafe-denied-success.svg)](
 https://github.com/rust-secure-code/safety-dance/)
 [![License](https://img.shields.io/crates/l/higher-kinded-types.svg)](
 https://github.com/danielhenrymantilla/higher-kinded-types.rs/blob/master/LICENSE-ZLIB)
@@ -19,6 +19,6 @@ https://github.com/danielhenrymantilla/higher-kinded-types.rs/actions)
 
 See the documentation of the <code>[ForLifetime]</code> trait for more info.
 
-[ForLifetime]: https://docs.rs/higher-kinded-types/0.1.0/higher-kinded-types/trait.ForLifetime.html
+[ForLifetime]: https://docs.rs/higher-kinded-types/0.1.0/higher_kinded_types/trait.ForLifetime.html
 
 <!-- Templated by `cargo-generate` using https://github.com/danielhenrymantilla/proc-macro-template -->
