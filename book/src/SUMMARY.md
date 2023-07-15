@@ -4,7 +4,9 @@
 
 - [What are HKTs](what-are-hkts.md)
 
-- [A motivating example](motivating-example.md)
+- [A motivating example: <code>sort_by_key()</code>](motivating-example.md)
+  - [Explanation of the issue](explain-sort-by-lifetimes.md)
+  - [Can we be fully generic over the return type?](generic-output-sort-by-lifetimes.md)
 
 # Using HKTs for Fun and Profit™
 
