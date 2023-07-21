@@ -26,8 +26,8 @@ where
     K : Ord,
 ```
 
-  - Note: the above is pseudo-code, although I find it more readable that way for those not used to
-    the `for<>` syntax. But for the sake of completeness, here is the real code:
+  - Note: the above is pseudo-code, although I find it more readable that way (for those not used to
+    the `for<>` syntax). But for the sake of completeness, here is the real code:
 
     <details><summary>Click here to see the <b>real code:</b></summary>
 
@@ -46,19 +46,26 @@ where
 Mainly, notice how the signature is **not** the following one:
 
 ```rust ,ignore
-//                     vvvvv
+//             `<'item>` introduced here
+//                       👇
 fn sort_by_key_simpler<'item, K>(
     self: &mut [T],
     key_getter: impl FnMut(&'item T) -> K,
                       // 👆
+//                rather than here!
 )
 where
     K : Ord,
 ```
 
-Now, if this is a detail you've never paid too much attention to, you should really stop, take a
-good moment to stare at this change, trying to guess what the difference is: how is this differently
-quantified?
+Now, if this is a detail to which you've never paid too much attention , you should really stop,
+take a good moment to stare at this change, trying to guess what the difference is:
+
+> how is this differently quantified?
+
+![squinting](https://user-images.githubusercontent.com/9920355/253741755-167d1598-fee4-496c-ae92-4a10be2f6fb5.png)
+
+___
 
 ### A difference in quantification
 
@@ -107,6 +114,8 @@ notation, and "for any x" (also called "for all x", "for each x", "for every x")
       - A basic example: `∀x: u32, x >= 0`.
 
       - A more interesting one: `∀x: i32, x.saturating_mul(x) >= 0` (the famous `∀𝓍∈ℝ, 𝓍²≥0`)
+
+![Confused Math lady](https://user-images.githubusercontent.com/9920355/253741982-508baff2-f27c-4f17-b065-a86cf78122e6.png)
 
 While these differences can be a bit mind-bending at first, there is a point of view which I find
 very handy, which is the _adversarial_ model. The idea is that you have, in front of you, a very
@@ -399,7 +408,7 @@ This does work 🥳
 
 But what about the other example, sorting by `tier`?
 
-```rust ,edition2018
+```rust compile_fail,edition2018
 # use ::core::cmp::Ord;
 #
 # struct Client { id: String, tier: u8 }
@@ -458,4 +467,8 @@ clients.sort_by_key_ref(|client| &client.tier);
 //                               👆
 ```
 
-which does compile.
+which does compile 🥳
+
+___
+
+But this is not fully satisfactory, as we will see in the following section.

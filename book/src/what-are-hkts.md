@@ -55,7 +55,7 @@ lifetime parameters or type parameters) to obtain further types.
 
 One way to illustrate this difference, for instance, would be to consider:
 
-```rust
+```rust ,ignore
 use ::higher_kinded_types::{ForLifetime as ForLt};
 
 type StrRefNaïve<'lt> = &'lt str;
@@ -66,7 +66,7 @@ type StrRef = ForLt!(<'lt> = &'lt str);
 Both `StrRefNaïve` and `StrRef` can be fed a generic parameter (in this
 instance, a lifetime parameter) so as to get or construct a type:
 
-```rust
+```rust ,ignore
 use ::higher_kinded_types::{ForLifetime as ForLt};
 
 # type StrRefNaïve<'lt> = &'lt str;
@@ -84,7 +84,7 @@ But what of:
 
 Well, while `StrRef` is indeed a standalone type:
 
-```rust
+```rust ,ignore
 use ::higher_kinded_types::{ForLifetime as ForLt};
 
 type StrRef = ForLt!(<'lt> = &'lt str);
@@ -149,7 +149,7 @@ Notice how we need for `T` to be:
 
 Hence the `ForLifetime` abstraction showcased above!
 
-```rust
+```rust ,ignore
 //! Real code! 🥳
 use ::higher_kinded_types::{ForLt as Ofᐸᑊ_ᐳ};
 
@@ -170,7 +170,7 @@ struct HktExampleLt<'a, 'b, T : Ofᐸᑊ_ᐳ> {
     `unicode_confusables`; I shall thenceforth only be using proper fully ASCII
     names such as `ForLt`:
 
-    ```rust
+    ```rust ,ignore
     //! Real code! 🥳
     use ::higher_kinded_types::ForLt;
 
@@ -188,7 +188,7 @@ But what about the `1`st bullet of "being a standalone type"? We definitely run
 into such a need the moment we try to turbofish and instantiate this
 `HktExampleLt`:
 
-```rust
+```rust ,ignore
 //! Real code! 🥳
 #![forbid(elided_lifetimes_in_paths)]
 

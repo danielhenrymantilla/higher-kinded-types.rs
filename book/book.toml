@@ -8,8 +8,9 @@ title = "Higher-Kinded Types: a magical journey dancing with lifetimes"
 [rust]
 edition = "2021"   # the default edition for code blocks
 
-[output.html.playground]
-editable = true
+[output.html]
+fold.enable = true
+playground.editable = true
 
 [preprocessor.toc]
 command = "mdbook-toc"

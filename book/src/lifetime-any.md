@@ -73,7 +73,7 @@ Well, the following compiling just fine is a bit problematic, is it not?
 ```rust ,edition2018
 use ::core::any::Any;
 
-fn wOnT_bE_uSaBlE_bEyOnD_r(
+fn wOnT_bE_uSaBlE_bEyOnD_r<'u>(
     r: Box<dyn 'u + Any>
 ) -> Box<dyn 'static + Any>
 {
@@ -130,7 +130,7 @@ impl<T : ?Sized + 'static> MyAny for T {
 
 // Main trick: this, much like `Any`'s own `: 'static`, makes `: 'static` a
 // mandatory step to be `MyAny`, but the big difference is that despite
-// the requirement, we don't get the reverse implicitation: as far as Rust is
+// the requirement, we don't get the reverse implication: as far as Rust is
 // concerned, there could exist `T : MyAny` for which `T : 'static` would
 // not hold!
 mod seal {
@@ -316,7 +316,7 @@ impl<'u> dyn 'u + MyAny {
 
 **With this API, we finally got `we_do_a_lil_unsafe()` to become a sound API!**
 
-```rust ,edition2018
+```rust ,ignore
 /// Sound!
 pub
 fn we_do_a_lil_unsafe<'u>(
@@ -340,7 +340,7 @@ So, until now, we've been attempting to `dyn Any`-erase a `&'u i32`, but _quid_ 
 
 Let's consider, now, for instance, the type `Cell<&'u i32>`:
 
-```rust
+```rust ,ignore
 /// Is this sound?
 pub
 fn we_do_a_lil_unsafe_2<'u>(
@@ -356,7 +356,7 @@ fn we_do_a_lil_unsafe_2<'u>(
     Box::new(r)
 }
 
-impl dyn 'u + MyAny {
+impl<'u> dyn 'u + MyAny {
     fn downcast_cell_ref<'r, T : 'static>(
         self: &'r (dyn 'u + MyAny),
     ) -> Option<&'r Cell<&'u T>>
@@ -483,7 +483,7 @@ that `dyn Trait<'lt>` is _invariant_ in `'lt`).
     Conclusion: we'll have to "stutter" and talk about `dyn 'lt + Trait<'lt>`.
 
 ```rust, edition2018
-use ::core::any::TypeId;
+use ::core::{any::TypeId, cell::Cell};
 
 pub
 trait MyAny<'lt> : seal::StaticSealed {
@@ -498,7 +498,7 @@ impl<T : ?Sized + 'static> MyAny<'_> for T {
 
 // Main trick: this, much like `Any`'s own `: 'static`, makes `: 'static` a
 // mandatory step to be `MyAny`, but the big difference is that despite
-// the requirement, we don't get the reverse implicitation: as far as Rust is
+// the requirement, we don't get the reverse implication: as far as Rust is
 // concerned, there could exist `T : MyAny` for which `T : 'static` would
 // not hold!
 mod seal {
@@ -530,7 +530,7 @@ impl<'u> dyn 'u + MyAny<'u> {
         self: &'r (dyn 'u + MyAny<'u>),
     ) -> Option<&'r Cell<&'u T>>
     {
-        self.is::<Cell<&'static T>>().then(unsafe {
+        self.is::<Cell<&'static T>>().then(|| unsafe {
             &*(self as *const Self as *const Cell<&T>)
         })
     }
@@ -567,13 +567,17 @@ these `we_do_a_lil_unsafe` operations: let's make it generic over some trait exp
 following "split a `'u`-infected type into `'u`, and a `'static`/non-`'u`-infected type.
 
 ```rust ,ignore
+//! In pseudo-code parlance:
 &'u i32 = Combine<'u, &'static i32>
 Cell<&'u i32> = Combine<'u, Cell<&'static i32>>
 // let's be able to add extra such associations with manual `impl`s
 ```
 
-The idea being that the latter can be `dyn`-erased, and we make it so the former (`'u`) be kept
-around at compile-time at all times.
+The idea being that:
+  - the latter can be `dyn`-erased,
+  - and we'll strive to make it so the former (`'u`) be kept around in the type system at all times.
+
+#### Implementation
 
  1. Express the `&'u i32 = Combine<'u, &'static i32>` intuition:
 
@@ -610,7 +614,9 @@ around at compile-time at all times.
     {{#include naive_any_example.rs:main}}
     ```
 
-<details><summary>Click here to play with the full snippet</summary>
+**[Full snippet playground](
+https://play.rust-lang.org/?version=stable&mode=debug&edition=2021&gist=a8263b0938f0d0c8913be7c16bd56490)**
+<details><summary>Click here to play with the full snippet inline</summary>
 
 ```rust ,edition2018,editable
 {{#include naive_any_example.rs:all}}

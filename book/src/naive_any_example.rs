@@ -27,22 +27,28 @@ mod lib {
         type Infected = Self;
     }
 
-    pub
+    //                  This is not strictly needed, but it is intuitive (if it only has
+    //                  that one `'lt`, then it has nothing else preventing it from being
+    //                  usable within `'lt`) and more importantly it will be quite
+    //                  convenient for the incoming `dyn` traits (we'll automagically
+    //                  get an implicit `+ 'lt`)
+    pub //              vvv
     trait Remove<'lt> : 'lt {
         //                          👇             👇
         type Static : 'static + Put<'lt, Infected = Self>;
         //                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^
-        //             This is not strictly required to implement this API,
-        //             but is the main trick allowing us not to have to deal
-        //             with `unsafe trait`s and complex/subtle preconditions,
-        //             since basically its safety requirements, for the downcast
-        //             below to be sound, are:
-        //               - being *exactly* generic over that lifetime and no others;
-        //               - being "injective" (X ≠ Y (modulo lt) must imply X::Static ≠ Y::Static)
-        //             Since both of these properties were a bit subtle to properly express,
-        //               - the `Put<'lt>` abstraction has been written to express this first point;
-        //               - and the `Remove<'lt> … where Put<'lt, … = Self>` guarantees our needed
-        //                 *bijection*.
+        //  This `Put` bound is not _strictly_ required to implement our API,
+        //  but is the main trick allowing us not to have to deal
+        //  with `unsafe trait`s and complex/subtle preconditions,
+        //  since basically the safety requirements, for the downcast
+        //  below to be sound, are:
+        //    - being *exactly* generic over that lifetime and no others;
+        //    - being "injective" (X ≠ Y (modulo lt) must imply X::Static ≠ Y::Static)
+        //
+        //  Since both of these properties were a bit subtle to properly express,
+        //    - the `Put<'lt>` abstraction has been written to express this first point;
+        //    - and the `Remove<'lt> … where Put<'lt, … = Self>` guarantees our needed
+        //      *bijection*.
 
         fn type_id_of_static() -> TypeId {
             TypeId::of::<Self::Static>()
@@ -69,6 +75,9 @@ mod lib {
 
     // ANCHOR: any
     #
+    /// Note, as mentioned above, thanks to `: 'lt` on this trait (from `Remove<'lt>`),
+    /// we get `dyn MyAny<'lt> = dyn 'lt + MyAny<'lt>`, thereby avoiding the
+    /// "lifetime stutter" 😌
     pub
     trait MyAny<'lt> : sealed::Remove<'lt> {
         fn dyn_type_id_of_static(&self) -> TypeId;
@@ -79,7 +88,7 @@ mod lib {
         ///
         /// `Remove<'lt>` is not `dyn` safe, but we'd like to act as if we had that
         /// super-bound. So instead, we use a sealed trait with a blanket impl.
-        pub trait Remove<'lt> {}
+        pub trait Remove<'lt> : 'lt {}
     }
     impl<'lt, T : Remove<'lt>> sealed::Remove<'lt> for T {}
 
@@ -89,52 +98,61 @@ mod lib {
         }
     }
 
-    impl<'lt> dyn 'lt + MyAny<'lt> {
+    impl<'lt> dyn MyAny<'lt> {
         pub
         fn is<U : Remove<'lt>>(&self) -> bool {
-            // Why this check can be trusted in the downcasts below is a bit more
-            // subtle than meets the eye (remember the difference between `downcast_ref` and
-            // `downcast_bounded_ref` to recall how we cannot afford being wave-handed here!
-            // These patterns are very unsound-prone, and rigor is needed).
+            // The reason why this check can be trusted in the downcasts below is a
+            // bit more subtle than meets the eye (remember the difference between
+            // `downcast_ref` and `downcast_bounded_ref` to recall how we cannot afford
+            // being wave-handed here! These patterns are very unsound-prone, and rigor
+            // is needed).
             //
-            // I have thus renamed the generic as `U`, to already start removing the mental bias
-            // wherein we already imagine `U` to be `T`: I am calling `T` the original type-erased
-            // type of the value contained within this `dyn MyAny<'lt>`.
+            // I have thus renamed the generic as `U`, to already start removing the
+            // mental bias wherein we already imagine `U` to be `T`: I am calling `T`
+            // the original type-erased type of the value contained within this
+            // `dyn MyAny<'lt>`.
             //
             // Technically, we have two cases:
             //   - `T = Foo<'lt>`, and `U = SomethingDifferent`.
-            //     In that case, `T::Static = Foo<'static>` and `U::Static` will be different types,
-            //     and thus, will have distinct `TypeId`s, making the following comparison fail.
-            //   - `T = Foo<'lt>`, and `U = Foo<'another_lt>`.
-            //     In that case, `T::Static` and `U::Static` will match, so the following comparison
-            //     will succeed, which could be deemed a false positive? (if `'another_lt ≠ 'lt`).
             //
-            //     But, in fact, this is fine, since remember that famous extra bound on
-            //     `type Static`: it had to be `: Put<'lt, Infected = Self>`.
+            //     In that case, `T::Static = Foo<'static>` and `U::Static` will be
+            //     different types, and thus, will have distinct `TypeId`s, making the
+            //     following comparison fail.
+            //
+            //   - `T = Foo<'lt>`, and `U = Foo<'another_lt>`.
+            //
+            //     In that case, `T::Static` and `U::Static` will match, so the
+            //     following comparison will succeed, which could be deemed a false
+            //     positive? (if `'another_lt ≠ 'lt`).
+            //
+            //     But, in fact, this is fine, since remember that famous extra bound
+            //     on `type Static`: it had to be `: Put<'lt, Infected = Self>`.
+            //
             //     So we have `T = <T::Static as Put<'lt>>::Infected`.
             //     Replacing `T::Static` with `U::Static`, we end up with:
-            //     `T = <U::Static as Put<'lt>>::Infected = U`, which means the downcast is sound!
+            //     `T = <U::Static as Put<'lt>>::Infected = U`, which means the
+            //     downcast is sound!
             self.dyn_type_id_of_static() == U::type_id_of_static()
         }
 
         pub
         fn downcast_ref<'r, T : Remove<'lt>>(
-            self: &'r (dyn 'lt + MyAny<'lt>),
+            self: &'r dyn MyAny<'lt>,
         ) -> Option<&'r T>
         {
             self.is::<T>().then(|| unsafe {
-                &*(self as *const Self as *const T)
+                &*(self as *const dyn MyAny<'lt> as *const T)
             })
         }
 
         /// `d_own_cast`, am I right?
         pub
         fn downcast_owned<T : Remove<'lt>>(
-            self: Box<dyn 'lt + MyAny<'lt>>,
+            self: Box<dyn MyAny<'lt>>,
         ) -> Option<T>
         {
             self.is::<T>().then(|| unsafe {
-                *Box::<T>::from_raw(Box::into_raw(self) as *mut Self as *mut T)
+                *Box::from_raw(Box::into_raw(self) as *mut dyn MyAny<'lt> as *mut T)
             })
         }
     }
@@ -145,7 +163,7 @@ mod lib {
     pub
     fn coërce<'lt, T : Remove<'lt>>(
         it: T,
-    ) -> Box<dyn 'lt + MyAny<'lt>>
+    ) -> Box<dyn MyAny<'lt>>
     {
         // Look: no unsafe!
         Box::new(it) as _

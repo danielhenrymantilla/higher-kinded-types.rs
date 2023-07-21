@@ -1,12 +1,13 @@
-# Summary
+# Table of Contents
 
 [Introduction](README.md)
 
 - [What are HKTs](what-are-hkts.md)
 
-- [A motivating example: <code>sort_by_key()</code>](motivating-example.md)
+- [A motivating example: `sort_by_key()`](motivating-example.md)
   - [Explanation of the issue](explain-sort-by-lifetimes.md)
   - [Can we be fully generic over the return type?](generic-output-sort-by-lifetimes.md)
+  - [Solving it with HKTs](hkts-sort-by-lifetimes.md)
 
 # Using HKTs for Fun and Profit™
 
@@ -22,7 +23,7 @@ ___
 
 # Niche stuff
 
-- [<code>impl\<#\[may_dangle\] …\> Drop</code>]()
+- [`impl\<#\[may_dangle\] …\> Drop`]()
 
 ___
 
