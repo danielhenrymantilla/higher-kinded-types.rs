@@ -21,14 +21,14 @@ macro_rules! ඞForLt_munch {
         $mode
     });
 
-    // case `&'_` (explicit elision)
+    // case `&'lifetime` (including `&'_`)
     (
         [output:
             $($acc:tt)*
         ]
         [input:
             &
-            '_
+            $lifetime:lifetime
             $($rest:tt)*
         ]
         $mode:tt
@@ -38,13 +38,13 @@ macro_rules! ඞForLt_munch {
             &
         ]
         [input:
-            '_
+            $lifetime
             $($rest)*
         ]
         $mode
     });
 
-    // case `&` (implicit elision)
+    // case `& /* no lifetime */` (implicit elision)
     (
         $acc:tt
         [input:
