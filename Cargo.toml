@@ -36,7 +36,9 @@ default = [
 fn_traits = []
 
 [dependencies]
+macro_rules_attribute.version = "0.2.0"
 never-say-never.version = "6.6.666"
+paste.version = "1.0.14"
 
 [dev-dependencies]
 
