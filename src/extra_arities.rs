@@ -12,6 +12,8 @@
 #[doc(inline)]
 pub use crate::ForLifetime as ForLt;
 
+use crate::utils::macro_export;
+
 /// Genericity over a _type_ parameter.
 ///
 /// Note: producing an <code>impl [ForTy]</code> type is not as easy as for
@@ -83,6 +85,88 @@ trait ForLtAndTy : Send + Sync + Unpin {
     type Of<'lt, T : 'lt>;
 }
 
+/// Same as [`crate::ForLifetime`], but for enforcing covariance of
+/// `Self::Of<'_>` (over `'_`).
+///
+/// ## Example
+///
+/// ```rust
+/// use ::higher_kinded_types::extra_arities::*;
+///
+/// //                                👇
+/// fn higher_kinded_api<'caller, T : CovariantForLt>(
+///     caller: T::Of<'caller>,
+///     from_str: impl FnOnce(&str) -> T::Of<'_>,
+/// ) -> bool
+/// where
+///     for<'callee>
+///         T::Of<'callee> : PartialEq
+///     ,
+/// {
+///     let local: String = ::std::fs::read_to_string(file!()).expect("demo");
+///     let callee: T::Of<'_> = from_str(&local);
+///     let comparison = {
+///         callee == T::covariant_cast(caller) // 👈
+///     };
+///     comparison
+/// }
+///
+/// new_For_type! {
+///     type StrRef = For!(#![covariant]<'r> = &'r str);
+/// }
+///
+/// higher_kinded_api::<StrRef>("…", |s| s);
+/// ```
+///
+/// ### Counter-example
+///
+/// ```rust ,compile_fail
+/// use ::higher_kinded_types::extra_arities::*;
+///
+/// new_For_type! {
+///     type NotCov = For!(#![covariant]<'r> = &'r mut &'r str);
+/// }
+/// ```
+///
+/// yields:
+///
+/// ```rust ,compile_fail
+/// # let () = 42; /*
+/// error: lifetime may not live long enough
+///  --> src/lib.rs:126:1
+///   |
+/// 6 | / new_For_type! {
+/// 7 | |     type NotCov = For!(#![covariant]<'r> = &'r mut &'r str);
+/// 8 | | }
+///   | | ^
+///   | | |
+///   | | lifetime `'if_you_are_getting_this_error` defined here
+///   | |_lifetime `'it_means_your_type_is_not_covariant` defined here
+///   |   associated function was supposed to return data with lifetime `'it_means_your_type_is_not_covariant` but it is returning data with lifetime `'if_you_are_getting_this_error`
+///   |
+///   = help: consider adding the following bound: `'if_you_are_getting_this_error: 'it_means_your_type_is_not_covariant`
+///   = note: requirement occurs because of a mutable reference to `&str`
+///   = note: mutable references are invariant over their type parameter
+///   = help: see <https://doc.rust-lang.org/nomicon/subtyping.html> for more information about variance
+///   = note: this error originates in the macro `$crate::ඞFor` which comes from the expansion of the macro `new_For_type` (in Nightly builds, run with -Z macro-backtrace for more info)
+/// # */
+/// ```
+pub
+trait CovariantForLt {
+    /// In order to help palliate WF-bounds, this trait carries such a bound.
+    type Of<'lt>
+    where
+        Self : 'lt,
+    ;
+
+    /// The actual "proof" which higher-kinded callees dealing with implementors
+    /// of this trait can use in order to take advantage of variance.
+    fn covariant_cast<'smol, 'humongous : 'smol>(
+        it: Self::Of<'humongous>,
+    ) -> Self::Of<'smol>
+    ;
+}
+
 /// Variadic version of [`crate::ForLt!`], suitable for the [`For…` traits of
 /// this module][self#traits].
 ///
@@ -128,6 +212,16 @@ trait ForLtAndTy : Send + Sync + Unpin {
 ///     ```rust
 ///     # #[cfg(any())] macro_rules! ignore {
 ///     For!(<'r, T> = &'r mut T)
+///     # }
+///     ```
+///
+///   - #### `CovariantForLt`
+///
+///       - ⚠️ to be used inside a [`new_For_type!`] invocation!
+///
+///     ```rust
+///     # #[cfg(any())] macro_rules! ignore {
+///     For!(#![covariant]<'r> = &'r mut String)
 ///     # }
 ///     ```
 #[macro_export] #[doc(hidden)]
@@ -194,6 +288,40 @@ new_For_type! {
 
         impl $crate::extra_arities::ForLtAndTy for $Name {
             type Of<$lt, $T : $lt> = $Type;
+        }
+    );
+
+    (
+        #[name($pub:tt $Name:ident)]
+        $(#[$attr:meta])*
+        #![covariant] <$lt:lifetime> = $Type:ty $(,)?
+    ) => (
+        $(#[$attr])*
+        $pub
+        struct $Name(fn(&()) -> &mut Self);
+
+        impl $crate::extra_arities::CovariantForLt for $Name {
+            type Of<$lt> = $Type
+            where
+                Self : $lt,
+            ;
+
+            // lifetimes renamed for hopefully nicer diagnostics
+            #[inline]
+            fn covariant_cast<
+                'if_you_are_getting_this_error,
+                'it_means_your_type_is_not_covariant,
+            >(
+                it: Self::Of<'it_means_your_type_is_not_covariant>,
+            ) -> Self::Of<'if_you_are_getting_this_error>
+            where
+                Self : 'if_you_are_getting_this_error
+                     + 'it_means_your_type_is_not_covariant,
+                'it_means_your_type_is_not_covariant
+                    : 'if_you_are_getting_this_error,
+            {
+                it
+            }
         }
     );
 
@@ -341,9 +469,9 @@ new_For_type! {
 /// //                                          vvv
 /// vec_for_each::<i32, Owned>(vec, |_, _owned: i32| {});
 /// ```
-#[macro_export] #[doc(hidden)]
-macro_rules! ඞnew_For_type {(
-    $(
+#[apply(macro_export)]
+macro_rules! new_For_type {
+    ($(
         $( #$attr:tt )*
         $pub:vis
         type $Name:ident =
@@ -352,16 +480,14 @@ macro_rules! ඞnew_For_type {(
             )?
             $($macro:ident)::+ ! ( $($args:tt)* )
         ;
-    )*
-) => (
-    $(
+    )*) => ($(
         $($($if_leading)? :: )? $($macro)::+ ! {
             #[name($pub $Name)]
             $(#$attr)*
             $($args)*
         }
-    )*
-)} #[doc(inline)] pub use ඞnew_For_type as new_For_type;
+    )*);
+}
 
 pub(crate)
 mod for_lt_and_lt {
