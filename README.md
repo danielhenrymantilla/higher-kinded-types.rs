@@ -19,6 +19,6 @@ https://github.com/danielhenrymantilla/higher-kinded-types.rs/actions)
 
 See the documentation of the <code>[ForLifetime]</code> trait for more info.
 
-[ForLifetime]: https://docs.rs/higher-kinded-types/0.1.0/higher-kinded-types/trait.ForLifetime.html
+[ForLifetime]: https://docs.rs/higher-kinded-types/0.1.1/higher-kinded-types/trait.ForLifetime.html
 
 <!-- Templated by `cargo-generate` using https://github.com/danielhenrymantilla/proc-macro-template -->
