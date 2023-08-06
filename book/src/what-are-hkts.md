@@ -242,7 +242,7 @@ if ::rand::random() {
     for "normal" Rust types (such as `&'ignored str`) directly:
 
     ```rust ,compile_fail
-    //! What other crates often write this for their own trait/API.
+    //! What other crates often write for their own trait/API.
 
     impl<'completely_irrelevant> ForLifetime for &'completely_irrelevant str {
         type Of<'lt> = &'lt str;

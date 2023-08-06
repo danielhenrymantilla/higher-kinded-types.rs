@@ -16,8 +16,9 @@ be implementing `Ord` for `Client`, since there is no canonical/absolute orderin
   - sometimes you may want to sort them based on their `.id`;
   - and sometimes you may want to sort them based on their `.tier`.
 
-So you cannot directly use `slice::sort()`, but luckily you notice there is a special API for
-sorting based on a field of our choosing:
+So you cannot directly use `slice::sort()`.
+
+But luckily, you notice there is a special API precisely to sort based on a field of our choosing:
 
 ```rust ,edition2018
 # struct Client { id: String, tier: u8 }

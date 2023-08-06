@@ -1,6 +1,6 @@
 # Table of Contents
 
-[Introduction](README.md)
+[Table of contents](README.md)
 
 - [What are HKTs](what-are-hkts.md)
 

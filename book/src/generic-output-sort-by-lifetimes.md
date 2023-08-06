@@ -101,9 +101,9 @@ but this time, [`Reverse`]d!
     ```rust ,ignore
     use ::core::cmp::Reverse;
 
-    //                 +---------- nope nope nope -------------+
-    //                /                                         \
-    //               v                                           vv
+    //               +------------ nope nope nope -------------+
+    //               |                                          \
+    //               |                                           vv
     <[_]>::sort_by_key(clients, |client: &'_ Client| -> Reverse<&'_ String> {
         Reverse(&client.tier)
     });
@@ -294,8 +294,7 @@ being _overly restrictive_" for a good while, now 😆
 Really, what we've been wanting to say is:
 
   - there exists some `type Output<'item> = …` definition, so that, for any choice of `'item` made
-    by the callee, we have the return type of our closure on a `&'item Client` being that
-    `Output<'item>`:
+    by the callee, we have the return type of our closure being that `Output<'item>`:
 
     ```rust ,ignore
     //! pseudo-code!

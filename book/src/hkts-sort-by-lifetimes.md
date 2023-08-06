@@ -52,6 +52,9 @@ And we suspected that HKTs and "`For` types" could be quite handy here. Let's se
 > //                     parameter
 > ```
 
+[`ForLifetime`]: https://docs.rs/higher-kinded-types/%5E0.1.1/higher_kinded_types/trait.ForLifetime.html
+[`::higher_kinded_types::extra_arities`]: https://docs.rs/higher-kinded-types/%5E0.1.1/higher_kinded_types/extra_arities/index.html
+
 We got _one lifetime_ parameter, so this is a good fit for [`ForLifetime`]:
 
   - ```rust ,ignore
@@ -66,7 +69,7 @@ We got _one lifetime_ parameter, so this is a good fit for [`ForLifetime`]:
     }
     ```
 
-  - See the `::higher_kinded_types::extra_arities` module for other such traits.
+  - See the [`::higher_kinded_types::extra_arities`] module for other such traits.
 
 ### 2. Write our Higher-Kinded API using it:
 
@@ -84,7 +87,7 @@ use ::higher_kinded_types::{ForLifetime as Ofᐸᑊ_ᐳ};
 fn intuition<Output: Ofᐸᑊ_ᐳ>(
     _get_key: impl for<'item>
         FnMut(&'item Client) -> Output::Of<'item>
-//                                    👆👆
+//                                    👆👆👆
 //                                  2) feed lifetime
     ,
 )
@@ -108,7 +111,7 @@ use ::higher_kinded_types::{ForLifetime as ForLt};
 fn intuition<Output: ForLt>(
     _get_key: impl for<'item>
         FnMut(&'item Client) -> Output::Of<'item>
-//                                    👆👆
+//                                    👆👆👆
 //                                  2) feed lifetime
     ,
 )
@@ -158,9 +161,9 @@ fn slice_sort_by_key<Key: ForLt> ( // 👈
 
     // 2. Feed the lifetimes on it as needed.
     mut get_key: impl for<'it> FnMut(&'it Client) -> Key::Of<'it>, // 👈
-)                                                 // ^
+)                                                 // |
 where                                             // |
-    for<'it> Key::Of<'it> : Ord // ------------------+
+    for<'it> Key::Of<'it> : Ord // <-----------------+
 {
     slice.sort_by(|a, b| Ord::cmp(
         &get_key(a),

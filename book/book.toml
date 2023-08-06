@@ -1,5 +1,7 @@
 [book]
-authors = ["Daniel Henry-Mantilla"]
+authors = [
+    "Daniel Henry-Mantilla <daniel.henry.mantilla@gmail.com>",
+]
 language = "en"
 multilingual = false
 src = "src"

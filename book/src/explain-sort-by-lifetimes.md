@@ -1,3 +1,5 @@
+# Explanation of the issue
+
 The problem stems from _quantification_. Here is the signature of `sort_by_key`:
 
 ```rust ,ignore
@@ -87,7 +89,7 @@ notation, and "for any x" (also called "for all x", "for each x", "for every x")
     ∀x: i32, x >= 0
     ```
 
-    which is `false`: there exists a(t least one) number `x` such that `x ≥ 0` does hold not,
+    which is `false`: there exists a(t least one) number `x` such that `x ≥ 0` does not hold,
     _i.e._, such that `x < 0`, _e.g._, `x = -1 `:
 
     ```rust ,ignore
@@ -104,7 +106,7 @@ notation, and "for any x" (also called "for all x", "for each x", "for every x")
         counter-example (and _vice-versa_):
 
           - if you want to disprove that all cars are red, it suffices to exhibit one non-red car;
-          - but if you wish to disprove that there exists a swan which is black you need to
+          - but if you wish to disprove that there exists a swan which is black, then you need to
             prove/observe that every swan is not black.
 
 
@@ -296,8 +298,8 @@ What about `'item`? Well, that's the key difference between `sort_by_key_simpler
 
             ___
 
-            Another point of view, related to this, is that **caller-chosen lifetimes cannot be
-            smaller than the scope of the `fn` body of the callee**:
+            An important property of Rust, related to this, is that **caller-chosen lifetimes cannot
+            be smaller than the scope of the `fn` body of the callee**:
 
             ```rust , ignore
             fn sort_by_key…(…) … where … { // ---+----------------+
@@ -329,7 +331,7 @@ What about `'item`? Well, that's the key difference between `sort_by_key_simpler
             So, from there, we can drop the `'k : 'fn` part, so as to have:
 
             ```rust ,ignore
-            ∀'k, ¬('fn : 'k) // for every `'k`, `'fn : 'k` does hold not.
+            ∀'k, ¬('fn : 'k) // for every `'k`, `'fn : 'k` does not hold.
             ⇒
             ∀'k, ∃'item = 'fn, ¬('item : 'k) // for every `'k`, there exists `'item`
                                              // (such as `'fn`),
@@ -343,7 +345,7 @@ What about `'item`? Well, that's the key difference between `sort_by_key_simpler
                                        //   for every `'item`, 'item : 'k` hold
                                        // )
             ⇔
-            Borrow-checking failure.
+            Borrow-checking failure (in the point of view of the caller).
             ```
 
             QED
