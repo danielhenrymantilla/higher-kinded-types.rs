@@ -11,8 +11,10 @@
 
 # Using HKTs for Fun and Profit™
 
-- [Motivation: lifetime-infected `dyn Any` erasure](lifetime-any.md)
-    - [Simple non-`'static` `dyn Any` with HKTs](lifetime-any-hkt.md)
+- [Lifetime-infected `dyn Any` erasure](lifetime-any-00.md)
+  - [On Your Knees, <code>Cell</code>!](lifetime-any-10-cell.md)
+  - [Fully generalizing this pattern](lifetime-any-20-generalizing.md)
+  - [Simple non-`'static` `dyn Any` with HKTs](lifetime-any-30-hkt.md)
 
 # Some Section
 

@@ -1,4 +1,8 @@
+<span style="text-align: center;">
+
 # Solving it with HKTs
+
+</span>
 
 From the previous section, we had:
 

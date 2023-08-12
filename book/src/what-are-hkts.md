@@ -1,4 +1,8 @@
+<span style="text-align: center;">
+
 # Higher-Kinded Types
+
+</span>
 
 _Higher-Kinded Types_ is the broader term used to talk of _nested generics_,
 _e.g._, having a type taking a generic parameter which would be, in turn,

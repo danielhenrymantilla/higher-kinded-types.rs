@@ -1,4 +1,8 @@
+<span style="text-align: center;">
+
 # A motivating example: `sort_by_key()`
+
+</span>
 
 ### Situation
 
