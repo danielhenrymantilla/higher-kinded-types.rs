@@ -31,7 +31,7 @@ mod lib {
     //                  that one `'lt`, then it has nothing else preventing it from being
     //                  usable within `'lt`) and more importantly it will be quite
     //                  convenient for the incoming `dyn` traits (we'll automagically
-    //                  get an implicit `+ 'lt`)
+    //                  get an implicit `: 'lt` when `: Remove<'lt>`)
     pub //              vvv
     trait Remove<'lt> : 'lt {
         //                          👇             👇
