@@ -4,10 +4,10 @@
 
 - [What are HKTs](what-are-hkts.md)
 
-- [A motivating example: `sort_by_key()`](motivating-example.md)
-  - [Explanation of the issue](explain-sort-by-lifetimes.md)
-  - [Can we be fully generic over the return type?](generic-output-sort-by-lifetimes.md)
-  - [Solving it with HKTs](hkts-sort-by-lifetimes.md)
+- [A motivating example: `sort_by_key()`](motivating-example-00.md)
+  - [Explanation of the issue](motivating-example-10-explain.md)
+  - [Can we be fully generic over the return type?](motivating-example-20-genericicty.md)
+  - [Solving it with HKTs](motivating-example-30-hkts.md)
 
 # Using HKTs for Fun and Profit™
 
