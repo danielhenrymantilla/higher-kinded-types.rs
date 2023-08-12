@@ -17,6 +17,8 @@ additional-css = [
     "tweaks.css",
 ]
 
+[output.linkcheck]
+
 [preprocessor.toc]
 command = "mdbook-toc"
 renderer = [

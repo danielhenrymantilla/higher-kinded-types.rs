@@ -346,7 +346,7 @@ impl<'u> dyn 'u + MyAny {
     problematic `'static` with `'u`. This notion of replacing a classic generic parameter with
     a restricted shape so that a lifetime placeholder be exposed upfront ought to sound very similar
     to the [`sort_by_key_ref()` signature in our `sort_by_key()` chapter](
-    ./explain-sort-by-lifetimes.md#solving-the-returned-borrow-problem).
+    ./motivating-example-10-explain.md#solving-the-returned-borrow-problem).
 
 Finally, we can simplify it down a bit by realizing the outer `&'r` is not playing any role here:
 if we are to return `-> &'r &'u T`, we may as well return `&'u T`! Much like we return `-> bool`s

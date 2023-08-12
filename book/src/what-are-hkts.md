@@ -41,11 +41,21 @@ Higher-Kinded APIs to be expressible, is that of the "nested genericity".
 
         They express the propery of "being generic over an itself generic type".
 
+So while HKTs may be the general term to talk about all these things as a whole, it is important to
+note that the `T` in `T : <'_>` wouldn't be higher-kinded type, but just an arrow-kinded type.
+
 The [`::higher-kinded-types`](https://docs.rs/higher-kinded-types) crate on
 which this book is based tries to remain close to Rust terminology, and these
 "arrow-kinded types" are therein called "`For` types", given the higher-order-ish
 nature of the nested generic parameter, not totally unlike `for<'lifetime> fn…`
 pointers or `dyn for<'lifetime> Trait…`s.
+
+  - So whilst an `impl ForLifetime` type would not qualify, in and of itself, for the HKT
+    terminology, a type generic over an `impl ForLifetime` type, would.
+
+  - It is not impossible that in certain chapters of this book, some kind of "let's use HKTs"
+    phrasing may be used, only for the actual implementation to mostly rely on these `impl For…`
+    types.
 
 ## `For` types (such as `impl ForLifetime` types)
 
@@ -80,13 +90,15 @@ const _: StrRefNaïve<'static> = "This is a `&'static str`";
 const _: <StrRef as ForLt>::Of<'static> = "This is a `&'static str`";
 ```
 
-  - [x] "is generic" / can be fed generic parameters to construct a type ✅
+<!-- We have to use input instead of - [x] because of a bug in linkcheck -->
+
+  - <input disabled="" type="checkbox" checked=""> "is generic" / can be fed generic parameters to construct a type ✅
 
 But what of:
 
   - [ ] is a type in and of itself ❓
 
-Well, while `StrRef` is indeed a standalone type:
+Well, whilst `StrRef` is indeed a standalone type:
 
 ```rust ,ignore
 use ::higher_kinded_types::{ForLifetime as ForLt};
@@ -104,7 +116,7 @@ type StrRefNaïve<'lt> = &'lt str;
 type Standalone = StrRefNaïve; // ❌ Error
 ```
 
-This errors with:
+Erroring with:
 
 ```console
 error[E0106]: missing lifetime specifier
@@ -138,11 +150,11 @@ write actual HKT APIs, like the basic example at the beginning of this post:
 //! Pseudo-code
 
 struct HktExampleLt<'a, 'b, T : <'_>> {
-//                          👆 1
+//                          👆 1.
     a: T<'a>,
-//      👆 2
+//      👆 2.
     b: T<'b>,
-//      👆 2
+//      👆 2.
 }
 ```
 
@@ -171,7 +183,7 @@ struct HktExampleLt<'a, 'b, T : Ofᐸᑊ_ᐳ> {
     is a GAT).
 
     I won't be doing that anymore, since real code should not be using these
-    `unicode_confusables`; I shall thenceforth only be using proper fully ASCII
+    `unicode_confusables`; I shall henceforth only be using proper fully ASCII
     names such as `ForLt`:
 
     ```rust ,ignore
@@ -209,14 +221,14 @@ type StrRef = ForLt!(<'lt> = &'lt str);
 
 let [a, b] = [String::from("a"), "b".into()];
 
-let ok = HktExampleLt::<StrRef> {
+let example = HktExampleLt::<StrRef> {
     a: &a,
     b: &b,
 };
 
 #[cfg(this_would_error)]
-let err = HktExampleLt::<StrRefNaïve> {
-//                                 👆 error, missing `<'lifetime>` parameter
+let example = HktExampleLt::<StrRefNaïve> {
+//                                     👆 error, missing `<'lifetime>` parameter
     a: &a,
     b: &b,
 };
@@ -225,17 +237,27 @@ let err = HktExampleLt::<StrRefNaïve> {
 // "outlives" the other.
 if ::rand::random() {
     drop(a);
-    println!("{}", ok.b); // works thanks to distinct lifetimes!
+    println!("{}", example.b); // works thanks to distinct lifetimes!
 } else {
     drop(b);
-    println!("{}", ok.a); // works thanks to distinct lifetimes!
+    println!("{}", example.a); // works thanks to distinct lifetimes!
 }
 # println!("✅");
 ```
 
-  - Notice how the `let err` case would not work, because of the missing
-    lifetime parameter that `StrRefNaïve` requires _eagerly_ / first, which in
-    our example does not make any sense: it is up to `a` and `b` to be picking
+  - <details><summary>Expand this if you want clarification regarding the "neither the lifetime of <code>a</code> nor <code>b</code> outlives the other" sentence.</summary>
+
+    <img
+      src = "https://user-images.githubusercontent.com/9920355/260241484-8d9b67ae-b44f-4378-9dbb-75fb042fc296.png"
+      height = "350px"
+      alt = "diagram illustrating lifetimes"
+    />
+
+    </details>
+
+  - Notice how the `StrRefNaïve` case would not work, because of the missing
+    lifetime parameter which `StrRefNaïve` requires _eagerly_ / first. In our
+    example, it does not make any sense: it is up to `a` and `b` to be picking
     their own lifetimes, which may be distinct, so `StrRefNaïve` has no reason
     to be picking _one_ upfront!
 
@@ -262,7 +284,7 @@ if ::rand::random() {
     ```
 
     But, as we will see in [the section about lifetime-infected `Any`s](
-    ./lifetime-any-hkt.md), this seemingly more appealing design is unable to
+    ./lifetime-any-30-hkt.md), this seemingly more appealing design is unable to
     express the distinction between `ForLt!(<'lt> = &'lt str)` and
     `ForLt!(<'lt> = &'static str)`, which can become a very unintuitive and
     frustrating limitation.

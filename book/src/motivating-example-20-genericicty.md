@@ -240,7 +240,7 @@ Surely not!
     But here is a peek preview of what we'll be able to work with, [later on], and compare the
     verbiage above with the elegant brevity of:
 
-    [later on]: hkts-sort-by-lifetimes.md#bonus-as-an-extension-method
+    [later on]: ./motivating-example-30-hkts.md#bonus-as-an-extension-method
 
     ```rust ,ignore
     clients.sort_by_dependent_key::<ForLt!{ (Tier, Reverse<&Id>) }>(|c| (
