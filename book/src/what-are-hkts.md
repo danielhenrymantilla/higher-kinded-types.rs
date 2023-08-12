@@ -29,7 +29,7 @@ struct HktExampleLt<'a, 'b, T : <'_>> {
 From there, we can see that the key component / the keystone allowing for
 Higher-Kinded APIs to be expressible, is that of the "nested genericity".
 
-  - In Haskell parlance, we could call them "Arrow-Kinded Types":
+  - In Haskell parlance, we could call these "Arrow-Kinded Types":
 
       - The kind of `T` in `T : <'_>` would be `'* -> *`.
 
