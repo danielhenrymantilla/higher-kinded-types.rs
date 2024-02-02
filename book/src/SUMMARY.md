@@ -16,9 +16,9 @@
   - [Fully generalizing this pattern](lifetime-any-20-generalizing.md)
   - [Simple non-`'static` `dyn Any` with HKTs](lifetime-any-30-hkt.md)
 
-# Some Section
+# Going further
 
-- [Some chapter]()
+- [`Unsoundness of `carcass: Body::Of<'static>`](may-dangle-00.md)
 
 ___
 
