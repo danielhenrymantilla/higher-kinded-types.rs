@@ -249,3 +249,22 @@ With all that having been laid out, it is time for:
 ```rust ,ignore
 {{#include may_dangle_oibit_exploit.rs:exploit}}
 ```
+
+___
+
+## Epilogue
+
+  - I did warn the snippet / API library was gonna be contrived! But it has the _right_ of doing everything it does.
+
+  - We can thus palliate this auto-trait problem by adding an unconditional `not_send_nor_sync: PhantomData<*mut ()>` field to our `Split<'soul, Body>` definition;
+
+  - and yet… _even then_ our `Split<'soul, Body>` will be unsound for certain choices of `Body` 😱, as we will see in the very next section.
+
+  - what a nice _segue_ to it, is it not?
+
+    <img
+        src="https://gist.github.com/assets/9920355/78b745ca-c534-4641-b7a2-4da68aa754d7"
+        title = "totally not a segue"
+        alt = "a segway"
+        height = "250px"
+    />
