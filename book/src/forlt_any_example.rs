@@ -19,6 +19,7 @@ mod lib {
 
     // ANCHOR: split
     // ANCHOR: just-split
+    // ANCHOR: just-split-shorter
     #
     pub
     struct Split<'soul, Body : ForLt> {
@@ -59,6 +60,7 @@ mod lib {
         pub
         fn into_inner(self: Split<'soul, Body>)
           -> Body::Of<'soul>
+    // ANCHOR_END: just-split-shorter
         {
             let reïmbued_body = unsafe {
                 // reïmbue the carcass with its `_soul`.
