@@ -173,7 +173,7 @@ ___
 
 Now, a scoped API is usually provided to do some _cleanup_ after the callback (a cleanup which, in real code, may be so critical that it cannot be tied to some `Drop` glue of a type _given_ to the caller, lest they `mem::forget()` it. For more context, _c.f._ the "Leakpocalypse" or how convoluted the `thread::scope()` API of the stdlib has to be).
 
-  - And when the cleanup is so critical, whatever is yielded to the callback should not escape the scope of the callback.
+  - When the cleanup is so critical, whatever is yielded to the callback should not escape the scope of the callback.
 
   - As of now, a caller could do:
 
@@ -201,12 +201,12 @@ struct PerThreadSingleton<'scope> {
                                      // gonna live on the edge, here.
 }
 
-                    // we don't care about this one, but _something_ has to be written.
+                    // we don't care about this one, but _something_ had to be written.
                     // vvvv
 impl PerThreadSingleton<'_> {
     pub                                           // Added! This is doing the magic.
-    fn with_new(                                  // 👇
-        scope: impl FnOnce(Option<PerThreadSingleton<'_>>),
+    fn with_new(                                  //             👇
+        scope: impl for<'scope> FnOnce(Option<PerThreadSingleton<'scope>>),
     )
     {
         let yield_ = scope;
@@ -225,7 +225,7 @@ impl PerThreadSingleton<'_> {
 }
 ```
 
-  - I'm going to skip properly explaining how this `'_` lifetime in `fn with_new()` achieves to represent that of the scope of the callback, or rather, one which cannot escape it. Suffices to mention that the `PerThreadSingleton<'_>` in the `impl` and the on in the `fn with_new()` are not alike: the latter cannot be replaced by `Self`! "One is not like the other". Re-read the [`sort_by_key()` section](motivating-example-10-explain.md) for more info.
+  - I'm going to skip properly explaining how this `for<'scope>` lifetime in `fn with_new()` achieves to represent that of the scope of the callback, or rather, one which cannot escape it. Re-read the [`sort_by_key()` section](motivating-example-10-explain.md) for more info.
 
 And now we've finally gotten a type, `PerThreadSingleton<'_>`, which can only be instantiated through this scoped API, **thereby yielding non-`'static` instances** (this is going to be important Soon™), and which cannot be `Send` lest a function such as `fn two_instances()` become problematic.
 

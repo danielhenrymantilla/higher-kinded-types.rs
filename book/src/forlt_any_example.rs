@@ -17,7 +17,7 @@ mod lib {
         type Of<'lt> = <F as FnOnce<(&'lt (), )>>::Output;
     }
 
-    // ANCHOR: split
+    // ANCHOR: split1
     // ANCHOR: just-split
     // ANCHOR: just-split-shorter
     #
@@ -55,6 +55,8 @@ mod lib {
         };
         Split { _soul, carcass }
     }
+    // ANCHOR_END: split1
+    // ANCHOR: split2
 
     impl<'soul, Body : ForLt> Split<'soul, Body> {
         pub
@@ -65,7 +67,7 @@ mod lib {
             let reïmbued_body = unsafe {
                 // reïmbue the carcass with its `_soul`.
                 ::core::mem::transmute::<
-                    Body::Of::<'static>,
+                    Body::Of::<'_>,
                     Body::Of::<'soul>,
                 >(
                     self.carcass
@@ -84,21 +86,21 @@ mod lib {
     {
         type Target = Body::Of<'soul>;
 
-        fn deref(
-            self: &'_ Split<'soul, Body>,
-        ) -> &'_ Body::Of<'soul>
+        fn deref<'r>(
+            self: &'r Split<'soul, Body>,
+        ) -> &'r Body::Of<'soul>
         {
             unsafe {
                 ::core::mem::transmute::<
-                    &Body::Of<'_>,
-                    &Body::Of<'soul>,
+                    &'r Body::Of<'_>,
+                    &'r Body::Of<'soul>,
                 >(
                     &self.carcass
                 )
             }
         }
     }
-    // ANCHOR_END: split
+    // ANCHOR_END: split2
 
     // ANCHOR: split-any-body
 

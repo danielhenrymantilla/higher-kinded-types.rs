@@ -6,14 +6,14 @@ following "split a `'u`-infected type into `'u`, and a `'static`/non-`'u`-infect
 
 ```rust ,ignore
 //! In pseudo-code parlance:
-&'u i32 = Combine<'u, &'static i32>
-Cell<&'u i32> = Combine<'u, Cell<&'static i32>>
+type &'u i32 = Combine<'u, &'static i32>
+type Cell<&'u i32> = Combine<'u, Cell<&'static i32>>
 // let's be able to add extra such associations with manual `impl`s
 ```
 
 The idea being that:
-  - the latter can be `dyn`-erased,
-  - and we'll strive to make it so the former (`'u`) be kept around in the type system at all times.
+  - the latter parameter of `Combine` can be `dyn Any-ish`-erased,
+  - and we'll strive to make it so the former (`'u`) be kept around in the type system at all times, _invariantly_.
 
 #### Implementation
 
@@ -53,7 +53,7 @@ The idea being that:
     ```
 
 **[Full snippet playground](
-https://play.rust-lang.org/?version=stable&mode=debug&edition=2021&gist=a8263b0938f0d0c8913be7c16bd56490)**
+https://play.rust-lang.org/?version=stable&mode=debug&edition=2021&gist=8450bb3525f5705ff34cce6730d5c1ce)**
 <details><summary>Click here to play with the full snippet inline</summary>
 
 ```rust ,edition2018,editable
@@ -78,7 +78,7 @@ So, the previous `Put<'lt> & Remove<'lt>` couple-traits design is indeed quite n
     higher-kinded types.
 
 So, in certain scenarios, _especially as a private-to-the-crate helper_, this approach can be the
-best one, and the one exposed in this section may not be necessary.
+best one, and the one exposed in the following section may not be necessary.
 
 However, it does have a rather big drawback, one which grows bigger and worse the more you work with
 this:
@@ -86,6 +86,8 @@ this:
   - whilst it _appears_ to be a fully general solution,
   - in practice, however, it does require concrete impls for each possible lifetime-generic type you
     or downstream users may want to use! ⚠️
+
+      - (for instance, notice how we had to write separate `impl`s for `&T` and `Cell<&T>`)
 
 This last point leads to two annoying aspects:
 
@@ -97,19 +99,18 @@ This last point leads to two annoying aspects:
     The issue lies in the interaction between a non-`std`lib type, and a non-`std`lib trait, when
     both stem from distinct crates:
 
-      - "the orphan rules" dictate that `impl` of that `ThatTrait for ThatType` lie in either of
-        these two crates.
+      - "the orphan rules" dictate that the `impl` of `ThatTrait for ThatType` lie in either of these two crates.
 
       - the problem is, these two crates may not know of each other! They may just happen to end up
         put together by a third-party dependent crate, which wants such usage. And this third party
         dependent cannot write the `impl`, since the orphan rules forbid it. So they are stuck, but
-        for having to write a newtype-wrapper to soothe Coherence.
+        for having to write a newtype-wrapper to soothe the Almighty Coherence.
 
       - the other option is for one of these two crates to kind of artificially make itself aware of
-        the other; but this only works when one of these two crates is famous enough to warrant
+        the other (_c.f._ `serde` features on many crates out there); but this only works when one of these two crates is famous enough to warrant
         such a dedicated support by the other crate.
 
-    That is, this design goes against organic composition of libraries.
+    That is, **this design goes against organic composition of libraries**.
 
     Back to our `Put & Remove` trait(s), which we will deem non-"famous enough", it means it is up
     to us to think of types for which `Put` may want to be implemented. So let's think of
@@ -189,7 +190,8 @@ This last point leads to two annoying aspects:
     let some_str_literal = "I live forever!";
     anys.push(coërce(some_str_literal));
 
-    // 2. How do we make a `&'static str` "remember" its `'static`-ness when `MyAny<'lt>`-erased?
+    // 2. How do we make a `&'static str` "remember" its `'static`-ness when
+    //    `MyAny<'lt>`-erased?
     'later: {
         // Error, expected a `&'static str`, got a `&'lt str`!
         // (to clarify: got a `<&'static str as Put<'lt>>::Infected = &'lt str`).
@@ -229,13 +231,13 @@ pub struct Wrapper<T>(pub T);
 
 /// Let's say that this `Wrapper` just disregards the given `'lt`.
 impl<'lt, T> Put<'lt> for Wrapper<T> {
-    type Infected = T;
+    type Infected = Wrapper<T>;
 }
 
 anys.push(coërce(Wrapper(some_str_literal)));
 'later: {
     // OK ✅
-    // (to clarify: got a `<Wrapper<&'static str> as Put<'lt>>::Infected = &'static str`).
+    // (to clarify: got a `<W<&'static str> as Put<'lt>>::Infected = W<&'static str>`).
     let Wrapper(some_str_literal): Wrapper<&'static str> = *anys[1].downcast_ref().unwrap();
 }
 
@@ -262,4 +264,4 @@ In pseudo-code, and after having removed the `as Put` and `::T` noise:
 Well, these do look a lot like our `ForLt!(<'lt> = &'lt str)` _vs._ `ForLt!(<'lt> = &'static str)`
 (arrow-kinded) types, do they not?
 
-Does that mean we can make `ForLt!`-powered (HKT) `dyn MyAny<'lt>` design work? Yes we can!
+Does that mean we can make `ForLt!`-powered (HKT) `dyn MyAny<'lt>` design work?

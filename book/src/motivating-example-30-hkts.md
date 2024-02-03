@@ -190,7 +190,7 @@ slice_sort_by_key::<ForLt!{ (Tier, Reverse<&Id>) }>(clients, |c| ( // 👈
 
   - #### Bonus: as an extension method
 
-    Or, with the [extension method pattern](https://docs.rs/extension-traits):
+    With the [extension method pattern](https://docs.rs/extension-traits):
 
     ```rust ,edition2018
     # #![feature(unboxed_closures)]

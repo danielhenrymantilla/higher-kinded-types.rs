@@ -10,22 +10,26 @@ mod lib {
         type Infected;
     }
 
-    /// _e.g._, `<&'static i32 as Put<'lt>>::Infected = &'lt i32`.
+    // Examples for non-lifetime-generic types:
+    impl Put<'_> for String {
+        type Infected = Self;
+    }
+    impl Put<'_> for i32 {
+        type Infected = Self;
+    }
+
+    // Case of `&'_ T` (more precisely, `&'_ (impl Put…)`):
+    // _e.g._, `<&'static i32 as Put<'lt>>::Infected = &'lt i32`.
     impl<'lt, T : Put<'lt>> Put<'lt> for &'static T {
         type Infected = &'lt T::Infected;
     }
 
+    // Similarly, `&'_ Cell<T>` this time:
     impl<'lt, T : Put<'lt>> Put<'lt> for Cell<&'static T> {
         type Infected = Cell<&'lt T::Infected>;
     }
 
-    impl Put<'_> for String {
-        type Infected = Self;
-    }
-
-    impl Put<'_> for i32 {
-        type Infected = Self;
-    }
+    /* "Reverse" operation: `Remove<'lt>`! */
 
     //                  This is not strictly needed, but it is intuitive (if it only has
     //                  that one `'lt`, then it has nothing else preventing it from being
@@ -67,7 +71,6 @@ mod lib {
     impl Remove<'_> for String {
         type Static = Self;
     }
-
     impl Remove<'_> for i32 {
         type Static = Self;
     }
@@ -119,6 +122,9 @@ mod lib {
             //     different types, and thus, will have distinct `TypeId`s, making the
             //     following comparison fail.
             //
+            //       - (EDIT: "different" here is meant as "non-reciprocally-subtypes",
+            //         since for those it is sound to "mix them up" (like `Any` does)).
+            //
             //   - `T = Foo<'lt>`, and `U = Foo<'another_lt>`.
             //
             //     In that case, `T::Static` and `U::Static` will match, so the
@@ -165,7 +171,7 @@ mod lib {
         it: T,
     ) -> Box<dyn MyAny<'lt>>
     {
-        // Look: no unsafe!
+        // Look ma: no unsafe!
         Box::new(it) as _
     }
     // ANCHOR_END: coerce

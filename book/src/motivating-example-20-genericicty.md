@@ -86,7 +86,7 @@ The return type of:
   - `sort_by_key_ref` is able to borrow from the input `client`, but by hardcoding a `&'item …`
     "shape" for such a borrowing (with the `…` part still not being allowed to borrow).
 
-To illustrate how insactisfactory this is, now consider wanting to sort based on the `.id`, again,
+To illustrate how unsatisfactory this is, now consider wanting to sort based on the `.id`, again,
 but this time, [`Reverse`]d!
 
   - we cannot use `sort_by_key_ref` with <code><span style="color: red;">\&</span>Reverse(…)</code>
@@ -148,7 +148,7 @@ So now we got:
   - `sort_by_key_ref()` for the `-> &'_ _` case;
   - `sort_by_key_ref_rev()` for the `-> Reverse<&'_ _>` case.
 
-Needless to say this is not scaling well; at all. In fact, we are ending up with the very opposite
+Needless to say this is not scaling well, at all. In fact, we are ending up with the very opposite
 of what generic APIs should be featuring!
 
 ### Example: chained/lexicographic ordering

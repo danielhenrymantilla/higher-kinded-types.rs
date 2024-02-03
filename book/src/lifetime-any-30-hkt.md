@@ -85,10 +85,26 @@ In fact, if we consider a type's "body" the `TypeId`-runtime-materializable part
                 // soul      body
 ```
 
+<span style="text-align: center;">
+
+<img
+    src="https://static.wikia.nocookie.net/dota2_gamepedia/images/d/dd/Parting_Shot_icon.png"
+    height = "100px"
+    title = "Dota: Parting Shot"
+/>
+
+</span>
+
 And indeed, once equipped with such a tool/pattern, we are easily able to systematically perform this `dyn Any`-ification of arbitrary `<'lt>`-dependent types:
 
  1. ```rust ,ignore
-    {{#include forlt_any_example.rs:split}}
+    {{#include forlt_any_example.rs:split1}}
+    ```
+
+    ![](https://gist.github.com/assets/9920355/5ad1d163-d2f9-41d4-87ca-121cb82a7bf4)
+
+    ```rust ,ignore
+    {{#include forlt_any_example.rs:split2}}
     ```
 
  1. And once we have a `Split<'soul, Body>`, it's easy to see how the `Any`-fication of the body can take place:
@@ -109,7 +125,7 @@ And indeed, once equipped with such a tool/pattern, we are easily able to system
     {{#include forlt_any_example.rs:main}}
     ```
 
-**[Full snippet playground: TODO]()**
+**[Full snippet playground](https://play.rust-lang.org/?version=nightly&mode=debug&edition=2021&gist=37194cdb1cdf5587f72ab862879cedcc)**
 <details><summary>Click here to play with the full snippet inline</summary>
 
 ```rust ,edition2018,editable

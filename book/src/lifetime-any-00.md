@@ -17,21 +17,21 @@ originally erased type, so as to undo the `dyn` erasure if we get it right
 
 The issue in question, here, is with lifetimes:
 
-  - `dyn Any` is a type with no lifetime within it (it is `: 'static`), so any lifetime information
+  - `dyn Any` is a type with no lifetimes within it (it is `: 'static`), so any lifetime information
     present in the original type before erasure is not present in the static/compile-time/type-level
     information of `dyn Any`.
 
   - but lifetimes are purely a compile-time construct!
 
-      - (technically you can implement a Rust compiler that skips
+      - For instance, technically, you can implement a Rust compiler that skips
         borrow-checking and directly tries to compile the (hopefully correct) code into machine
         code, and if you do that then your compiler will be able to fully[^ignoring_lifetimes]
-        ignore lifetimes).
-
-[^ignoring_lifetimes]: `for<'a, 'b>`-arity, on the other hand, does play a role and is able to lead to different monomorphizations, though. Otherwise `fn(&str) -> &str` and `fn(&str) -> &'static str)`, which are both `: 'static` would be mixed up by `Any`.
+        ignore lifetimes.
 
   - this means that it won't be possible to query back that lost lifetime information within the
     runtime/`dyn`amic self-type-identification machinery.
+
+[^ignoring_lifetimes]: `for<'a, 'b>`-arity, on the other hand, does play a role and is able to lead to different monomorphizations, though. Otherwise `fn(&str) -> &str` and `fn(&str) -> &'static str)`, which are both `: 'static` would be mixed up by `Any`.
 
 So, because of this, types are not allowed to carry lifetime information/restrictions within them, in
 order for them be soundly erasable to `dyn Any`: this property is achieved thanks to the notorious
@@ -90,12 +90,9 @@ fn wOnT_bE_uSaBlE_bEyOnD<'u>(
     `Box<dyn 'u + 'static + Any>`, which, in turn, is a `Box<dyn 'static + Any>` since `: 'a + 'b`
     is equivalent to `: union('a, 'b) ~ max('a, 'b) = 'static when 'b = 'static` (people often
     trip up on this, since they're so used to seeing `+ 'u` as a max-bound of usability of items,
-    when it's actually _a lower bound_.
+    when it's actually _a lower bound_).
 
-    Same as with `FnMut()` and `FnOnce()`, for instance: whilst
-    an arbitrary `F : FnOnce()` may only be callable once (conservative assumption _barring extra
-    information_), a `F : FnOnce() + FnMut()` is not an oxymoron, but just a plain `F : FnMut()`.
-    It's the same with `: 'region_of_usability`)
+      - (Same as with `FnMut()` and `FnOnce()`, for instance: whilst an arbitrary `F : FnOnce()` may only be callable once (conservative assumption _barring extra information_), a `F : FnOnce() + FnMut()` is not an oxymoron, but just a plain `F : FnMut()`. It's the same with `: 'region_of_usability`)
 
     In other words, the very `: 'static` which had been slapped onto `Any` for soundness, is
     actually the one giving, here, a capability which makes `dyn Any`s "too strong", and thus,

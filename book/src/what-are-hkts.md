@@ -37,7 +37,7 @@ Higher-Kinded APIs to be expressible, is that of the "nested genericity".
 
       - HKTs would then be a "nestedly Arrow-Kinded" type:
 
-        The kind of `HktExampleLt` would be `('* -> *) -> *`.
+        The kind of `HktExampleLt`(barring `'a, 'b`) would be `('* -> *) -> *`.
 
         They express the propery of "being generic over an itself generic type".
 

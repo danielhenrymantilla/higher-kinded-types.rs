@@ -177,6 +177,7 @@ be unsound (like our own very case, obviously, but not only that). This means th
 allowed to modify that `<'lt>` in any way: it will keep it exactly as it initially appears (we say
 that `dyn Trait<'lt>` is _invariant_ in `'lt`).
 
+<!--
   - Alas, despite the `<'lt>` parameter on `Trait`, the `+ 'usability` parameter is still needed for
     the type, and `Box<dyn Trait<'lt>>` is sugar not for `Box<dyn Trait<'lt> + 'lt>` but for
     `Box<dyn Trait<'lt> + 'static>`, which is a type that combines the worst of both worlds:
@@ -189,7 +190,6 @@ that `dyn Trait<'lt>` is _invariant_ in `'lt`).
 
     Conclusion: we'll have to "stutter" and talk about `dyn 'lt + Trait<'lt>`.
 
-<!--
   - Unless, we use the following trick: if we define `trait Trait<'lt>` as being bounded by `: 'lt`,
     then the meaning of `Box<dyn Trait<'lt>>` changes from `Box<dyn Trait<'lt> + 'static>` to
     `Box<dyn Trait<'lt> + 'lt>`, which is exactly what we wanted! -->
@@ -197,8 +197,9 @@ that `dyn Trait<'lt>` is _invariant_ in `'lt`).
 ```rust, edition2018
 use ::core::{any::TypeId, cell::Cell};
 
-pub
-trait MyAny<'lt> : seal::StaticSealed {
+//    invariance | convenience, to have `dyn MyAny<'lt>` mean `dyn 'lt + MyAny<'lt>`
+pub //     vvvvv   vvvvvv
+trait MyAny<'lt> : 'lt + seal::StaticSealed {
     fn type_id(&self) -> TypeId;
 }
 
@@ -221,7 +222,7 @@ mod seal {
 // --------------------------------
 
 // from there, the usual downcasting shenanigans:
-impl<'u> dyn 'u + MyAny<'u> {
+impl<'u> dyn MyAny<'u> {
     pub
     fn is<T : 'static>(&self) -> bool {
         self.type_id() == TypeId::of::<T>()
@@ -229,7 +230,7 @@ impl<'u> dyn 'u + MyAny<'u> {
 
     pub
     fn downcast_bounded_ref<'r, T : 'static>(
-        self: &'r (dyn 'u + MyAny<'u>),
+        self: &'r dyn MyAny<'u>,
     ) -> Option<&'r &'u T>
     {
         self.is::<&'static T>().then(|| unsafe {
@@ -239,7 +240,7 @@ impl<'u> dyn 'u + MyAny<'u> {
     }
 
     fn downcast_cell_ref<'r, T : 'static>(
-        self: &'r (dyn 'u + MyAny<'u>),
+        self: &'r dyn MyAny<'u>,
     ) -> Option<&'r Cell<&'u T>>
     {
         self.is::<Cell<&'static T>>().then(|| unsafe {
@@ -252,7 +253,7 @@ impl<'u> dyn 'u + MyAny<'u> {
 pub
 fn we_do_a_lil_unsafe_2<'u>(
     r: Cell<&'u i32>,
-) -> Box<dyn 'u + MyAny<'u>>
+) -> Box<dyn MyAny<'u>>
 {
     // SAFETY:
     //  1. this `'static` is immediately erased to `dyn 'u + …`,
