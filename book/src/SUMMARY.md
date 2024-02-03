@@ -20,6 +20,7 @@
 
 - [`Unsoundness of `carcass: Body::Of<'static>`](may-dangle-00.md)
   - [Exploiting the unsoundness, method 1](may-dangle-10-oibits.md)
+  - [Exploiting the unsoundness, method 2](may-dangle-20-drop.md)
 
 ___
 
