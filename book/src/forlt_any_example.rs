@@ -22,7 +22,7 @@ mod lib {
     // ANCHOR: just-split-shorter
     #
     pub
-    struct Split<'soul, Body : ForLt> {
+    struct Animaterium<'soul, Body : ForLt> {
         _soul: PhantomInvariant<'soul>,
 
         carcass: Body::Of<'static>,
@@ -41,7 +41,7 @@ mod lib {
     pub
     fn soul_split<'soul, Body : ForLt>(
         value: Body::Of<'soul>,
-    ) -> Split<'soul, Body>
+    ) -> Animaterium<'soul, Body>
     {
         let _soul: PhantomInvariant::<'soul> = <_>::default();
         let carcass = unsafe {
@@ -53,14 +53,14 @@ mod lib {
                 value
             )
         };
-        Split { _soul, carcass }
+        Animaterium { _soul, carcass }
     }
     // ANCHOR_END: split1
     // ANCHOR: split2
 
-    impl<'soul, Body : ForLt> Split<'soul, Body> {
+    impl<'soul, Body : ForLt> Animaterium<'soul, Body> {
         pub
-        fn into_inner(self: Split<'soul, Body>)
+        fn into_inner(self: Animaterium<'soul, Body>)
           -> Body::Of<'soul>
     // ANCHOR_END: just-split-shorter
         {
@@ -82,12 +82,12 @@ mod lib {
     impl<'soul, Body : ForLt>
         ::core::ops::Deref
     for
-        Split<'soul, Body>
+        Animaterium<'soul, Body>
     {
         type Target = Body::Of<'soul>;
 
         fn deref<'r>(
-            self: &'r Split<'soul, Body>,
+            self: &'r Animaterium<'soul, Body>,
         ) -> &'r Body::Of<'soul>
         {
             unsafe {
@@ -103,12 +103,12 @@ mod lib {
     // ANCHOR_END: split2
 
     // ANCHOR: split-any-body
-
-    /// Sealed trait over the `Split<'soul, Body : 'static>` types exclusively.
+    #
+    /// Sealed trait over the `Animaterium<'soul, Body : 'static>` types exclusively.
     mod seal {
         use super::*;
-        pub trait IsSplit {}
-        impl<Body : 'static + ForLt> IsSplit for Split<'_, Body> {}
+        pub trait IsAnimaterium {}
+        impl<Body : 'static + ForLt> IsAnimaterium for Animaterium<'_, Body> {}
         // Note: `ForLt : 'static` implies that this "higher-order" type, such as:
         //  1. `ForLt!(&str) = ForLt!(&'_ str) = ForLt!(<'soul> = &'soul str)`
         //  2. `ForLt!(&'static str) = ForLt!(<'soul> = &'static str)`
@@ -118,16 +118,16 @@ mod lib {
         // and `2.` around.
     }
 
-    /// A `dyn`-safe `Split<'soul, …>` (with the `…` part erased), which we'll
-    /// make downcastable back to its corresponding `Split<…>` implementor.
+    /// A `dyn`-safe `Animaterium<'soul, …>` (with the `…` part erased), which we'll
+    /// make downcastable back to its corresponding `Animaterium<…>` implementor.
     pub
-    trait SplitAnyBody<'soul> : seal::IsSplit
-        //            ^^^^^^^
-        //            keep `'soul` part of the `dyn`, *invariantly*.
+    trait AnyMaterium<'soul> : seal::IsAnimaterium
+        //           ^^^^^^^
+        //           keep `'soul` part of the `dyn`, *invariantly*.
     where
         Self : 'soul,
         //     ^^^^^
-        // for convenience / to avoid the `dyn 'soul + SplitAnyBody<'soul>` stutter.
+        // for convenience / to avoid the `dyn 'soul + AnyMaterium<'soul>` stutter.
     {
         /// Needed to check the downcasting (much like `Any` does).
         fn type_id_of_body(&self)
@@ -136,15 +136,15 @@ mod lib {
     }
 
     impl<'soul, Body : 'static + ForLt>
-        SplitAnyBody<'soul>
+        AnyMaterium<'soul>
     for
-        Split<'soul, Body>
+        Animaterium<'soul, Body>
     {
         fn type_id_of_body(&self)
           -> TypeId
         {
             // Note: if it helps, we could replace `TypeId::of::<Body>()` here and
-            // below with `TypeId::of::< Split<'_, Body> >()` (where `'_` would be
+            // below with `TypeId::of::< Animaterium<'_, Body> >()` (where `'_` would be
             // `'static`).
             //
             // In other words, this is equivalent to (bijective with)
@@ -154,37 +154,38 @@ mod lib {
         }
     }
 
-    impl<'soul> dyn SplitAnyBody<'soul> {
+    impl<'soul> dyn AnyMaterium<'soul> {
         pub
         fn coërce<Body : 'static + ForLt>(
             value: Body::Of<'soul>,
-        ) -> Box<dyn SplitAnyBody<'soul>>
+        ) -> Box<dyn AnyMaterium<'soul>>
         {
-            Box::new(soul_split::<Body>(value)) as _ // `dyn` coërcion/erasure!
+            let animaterium: Animaterium<'soul, Body> = soul_split::<Body>(value);
+            Box::new(animaterium) as _ // `dyn` coërcion/erasure!
         }
 
         pub
         fn downcast_ref<'r, Body : 'static + ForLt>(
-            self: &'r dyn SplitAnyBody<'soul>,
+            self: &'r dyn AnyMaterium<'soul>,
         ) -> Option<&'r Body::Of<'soul>>
         {
             (self.type_id_of_body() == TypeId::of::<Body>())
-                .then(|| -> &'r Split<'soul, Body> { unsafe {
+                .then(|| -> &'r Animaterium<'soul, Body> { unsafe {
                     // SAFETY:
                     //  1. thanks to the `seal`, we know the underlying instance
-                    //     behind this `dyn` is necessarily some `Split<'soul, X>`
+                    //     behind this `dyn` is necessarily some `Animaterium<'soul, X>`
                     //     (`'soul` being the same since it is invariant everywhere).
                     //  2. `.type_id_of_body()` gives us `TypeId::of::<X>()`.
                     //  3. Since `X : 'static, Body : 'static`, their equal type ids
                     //     imply equal types (the very design underpinning
                     //     `::core::any::Any`!): `X = Body`.
                     &*(
-                        self as *const dyn SplitAnyBody<'soul>
-                             as *const Split<'soul, Body>
+                        self as *const dyn AnyMaterium<'soul>
+                             as *const Animaterium<'soul, Body>
                     )
                 }})
                 // convenience step:
-                .map(|split: &'r Split<'soul, Body>| -> &'r Body::Of<'soul> {
+                .map(|split: &'r Animaterium<'soul, Body>| -> &'r Body::Of<'soul> {
                     &**split
                 })
         }
@@ -210,10 +211,10 @@ fn main() {
 
 
     // 2. …to a homogenous array…
-    let anys: [Box<dyn SplitAnyBody<'_>>; 3] = [
-        <dyn SplitAnyBody<'_>>::coërce::<A>(a),
-        <dyn SplitAnyBody<'_>>::coërce::<B>(b),
-        <dyn SplitAnyBody<'_>>::coërce::<C>(c),
+    let anys: [Box<dyn AnyMaterium<'_>>; 3] = [
+        <dyn AnyMaterium<'_>>::coërce::<A>(a),
+        <dyn AnyMaterium<'_>>::coërce::<B>(b),
+        <dyn AnyMaterium<'_>>::coërce::<C>(c),
     ];
     // 3. …and back!
     let [a, b, c] = &anys;

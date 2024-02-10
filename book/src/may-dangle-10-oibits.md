@@ -4,7 +4,7 @@ For context:
 
 ```rust ,ignore
 pub
-struct Split<'soul, Body : ForLt> {
+struct Animaterium<'soul, Body : ForLt> {
     _soul: PhantomInvariant<'soul>,
     carcass: Body::Of<'static>,
 }
@@ -12,9 +12,9 @@ struct Split<'soul, Body : ForLt> {
 pub
 fn soul_split<'soul, Body : ForLt>(
     value: Body::Of<'soul>,
-) -> Split<'soul, Body>
+) -> Animaterium<'soul, Body>
 {
-    Split {
+    Animaterium {
         _soul: <_>::default(),
         carcass: unsafe {
             ::core::mem::transmute::<Body::Of<'soul>, Body::Of<'static>>(value)
@@ -22,9 +22,9 @@ fn soul_split<'soul, Body : ForLt>(
     }
 }
 
-impl<'soul, Body : ForLt> Split<'soul, Body> {
+impl<'soul, Body : ForLt> Animaterium<'soul, Body> {
     pub
-    fn into_inner(self: Split<'soul, Body>)
+    fn into_inner(self: Animaterium<'soul, Body>)
       -> Body::Of<'soul>
 ```
 
@@ -53,7 +53,7 @@ And that last question hits the nail on the head. That property, and that's some
 ```rs ,ignore
 /// 1. This type represents `Body::Of<'soul>`.
 pub
-struct Split<'soul, Body : ForLt> {
+struct Animaterium<'soul, Body : ForLt> {
     /// 2. This field is `Send + Sync`.
     _soul: PhantomInvariant<'soul>,
 
@@ -62,7 +62,7 @@ struct Split<'soul, Body : ForLt> {
 }
 ```
 
-Thus, `Split<'soul, Body>`, which is supposed to be a `Body::Of<'soul>` value, in practice, is "as `Send/Sync`" as `Body::Of<'static>`.
+Thus, `Animaterium<'soul, Body>`, which is supposed to be a `Body::Of<'soul>` value, in practice, is "as `Send/Sync`" as `Body::Of<'static>`.
 
 ## Exploit
 
@@ -153,9 +153,9 @@ impl PerThreadSingleton {
         EXISTS.with(|already_exists| {
             if already_exists.get().not() {
                 already_exists.set(true);
-                yield_(Some(PerThreadSingleton {
+                yield_(PerThreadSingleton {
                     _not_send: <_>::default(),
-                }));
+                });
             }
         })
     }
@@ -204,20 +204,18 @@ struct PerThreadSingleton<'scope> {
                     // we don't care about this one, but _something_ had to be written.
                     // vvvv
 impl PerThreadSingleton<'_> {
-    pub                                           // Added! This is doing the magic.
-    fn with_new(                                  //             👇
-        scope: impl for<'scope> FnOnce(Option<PerThreadSingleton<'scope>>),
+    pub                                    // Added! This is doing the magic.
+    fn with_new(                           //             👇
+        scope: impl for<'scope> FnOnce(PerThreadSingleton<'scope>),
     )
     {
         let yield_ = scope;
         EXISTS.with(|already_exists| {
-            if already_exists.get() {
-                yield_(None)
-            } else {
+            if already_exists.get().not() {
                 already_exists.set(true);
-                yield_(Some(PerThreadSingleton {
+                yield_(PerThreadSingleton {
                     _not_send: <_>::default(),
-                }));
+                });
                 already_exists.set(false); // 👈 allowing us to soundly add this!
             }
         })
@@ -250,15 +248,25 @@ With all that having been laid out, it is time for:
 {{#include may_dangle_oibit_exploit.rs:exploit}}
 ```
 
+**[Full snippet Playground](https://play.rust-lang.org/?version=nightly&mode=debug&edition=2021&gist=0a275067cad59df80213e435691fe92b)**
+
+<details><summary>Click here to fiddle with the full snippet inline</summary>
+
+```rust ,edition2018,editable
+{{#include may_dangle_oibit_exploit.rs:all}}
+```
+
+</details>
+
 ___
 
 ## Epilogue
 
   - I did warn the snippet / API library was gonna be contrived! But it has the _right_ of doing everything it does.
 
-  - We can thus palliate this auto-trait problem by adding an unconditional `not_send_nor_sync: PhantomData<*mut ()>` field to our `Split<'soul, Body>` definition;
+  - We can thus palliate this auto-trait problem by adding an unconditional `not_send_nor_sync: PhantomData<*mut ()>` field to our `Animaterium<'soul, Body>` definition;
 
-  - and yet… _even then_ our `Split<'soul, Body>` will be unsound for certain choices of `Body` 😱, as we will see in the very next section.
+  - and yet… _even then_ our `Animaterium<'soul, Body>` will be unsound for certain choices of `Body` 😱, as we will see in the very next section.
 
   - what a nice _segue_ to it, is it not?
 

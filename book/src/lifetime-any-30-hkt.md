@@ -107,12 +107,14 @@ And indeed, once equipped with such a tool/pattern, we are easily able to system
     {{#include forlt_any_example.rs:split2}}
     ```
 
- 1. And once we have a `Split<'soul, Body>`, it's easy to see how the `Any`-fication of the body can take place:
+ 1. ### From `Animaterium` to `dyn AnyMaterium`
+
+    And once we have a `Split<'soul, Body>`, it's easy to see how the `Any`-fication of the body can take place:
 
     ```rust ,ignore
     /// Reminder.
     pub
-    struct Split<'soul, Body : ForLt> {
+    struct Animaterium<'soul, Body : ForLt> {
         _soul: PhantomInvariant<'soul>,
         carcass: Body::Of<'static>,
     }
@@ -125,8 +127,8 @@ And indeed, once equipped with such a tool/pattern, we are easily able to system
     {{#include forlt_any_example.rs:main}}
     ```
 
-**[Full snippet playground](https://play.rust-lang.org/?version=nightly&mode=debug&edition=2021&gist=37194cdb1cdf5587f72ab862879cedcc)**
-<details><summary>Click here to play with the full snippet inline</summary>
+**[Full snippet playground](https://play.rust-lang.org/?version=nightly&mode=debug&edition=2021&gist=88a1c709dea24cd53777ba12e44c5efc)**
+<details><summary>Click here to fiddle with the full snippet inline</summary>
 
 ```rust ,edition2018,editable
 {{#include forlt_any_example.rs:all}}

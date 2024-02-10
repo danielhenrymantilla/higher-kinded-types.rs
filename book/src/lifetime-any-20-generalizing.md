@@ -54,7 +54,7 @@ The idea being that:
 
 **[Full snippet playground](
 https://play.rust-lang.org/?version=stable&mode=debug&edition=2021&gist=8450bb3525f5705ff34cce6730d5c1ce)**
-<details><summary>Click here to play with the full snippet inline</summary>
+<details><summary>Click here to fiddle with the full snippet inline</summary>
 
 ```rust ,edition2018,editable
 {{#include naive_any_example.rs:all}}
