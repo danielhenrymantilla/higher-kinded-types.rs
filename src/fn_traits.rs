@@ -85,7 +85,7 @@ use crate::advanced::WithLifetime;
 
 pub
 struct Input<'lt> {
-   _0: *mut Self,
+    _0: *mut Self,
 }
 
 impl<'lt, F> WithLifetime<'lt> for crate::ඞ::ForLt<F>

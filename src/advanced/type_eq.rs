@@ -14,11 +14,14 @@
 //! In that case, you can actually just write the corresponding real code:
 //!
 //! ```rust
-//! # use ::higher_kinded_types::ForLt;
+//! # use ::higher_kinded_types::prelude::*;
 //! #
-//! fn f<'s, T : ForLt>(s: &'s str)
+//! // Alas, for an equality bound using a _fixed_ rather than a `for<>` lifetime, naming
+//! // the internal `ForLifetimeUnsized` super trait is necessary.
+//! // Otherwise, the opaque `Of<'not_s> : Sized` type conflicts with `Of<'s> = &'s str`.
+//! fn f<'s, T : ForLifetimeUnsized>(s: &'s str)
 //! where
-//!     T : ForLt<Of<'s> = &'s str>,
+//!     T : ForLifetimeUnsized<Of<'s> = &'s str>,
 //! {
 //!     let _: T::Of<'s> = s;
 //! }
@@ -62,11 +65,11 @@
 //! ```rust
 //! use ::higher_kinded_types::{ForLt, advanced::type_eq::{self, Is}};
 //!
-//! fn f<'a, T : ForLt>(a: &'a str)
+//! fn f<'s, T : ForLt>(a: &'s str)
 //! where
-//!     T::Of<'a> : Is<EqTo = &'a str>,
+//!     T::Of<'s> : Is<EqTo = &'s str>,
 //! {
-//!     let _: T::Of<'a> = type_eq::cast_left::<T::Of<'a>>(a);
+//!     let _: T::Of<'s> = type_eq::cast_left::<T::Of<'s>>(a);
 //! }
 //! ```
 //!

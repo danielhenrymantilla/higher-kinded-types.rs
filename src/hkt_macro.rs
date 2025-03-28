@@ -50,7 +50,7 @@ macro_rules! dispatch {($_:tt
     /// ### Examples
     ///
     /// ```rust
-    /// use ::higher_kinded_types::ForLt;
+    /// use ::higher_kinded_types::prelude::{*, ForLifetimeUnsized as ForLt};
     ///
     /// type A = ForLt!(<'r> = &'r str);
     /// // the following two definitions are equivalent to A (syntax sugar).
