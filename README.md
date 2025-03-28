@@ -8,7 +8,7 @@ https://github.com/danielhenrymantilla/higher-kinded-types.rs)
 https://crates.io/crates/higher-kinded-types)
 [![Documentation](https://docs.rs/higher-kinded-types/badge.svg)](
 https://docs.rs/higher-kinded-types)
-[![MSRV](https://img.shields.io/badge/MSRV-1.65.0-white)](
+[![MSRV](https://img.shields.io/badge/MSRV-1.79.0-white)](
 https://gist.github.com/danielhenrymantilla/8e5b721b3929084562f8f65668920c33)
 [![unsafe forbidden](https://img.shields.io/badge/unsafe-forbidden-success.svg)](
 https://github.com/rust-secure-code/safety-dance/)

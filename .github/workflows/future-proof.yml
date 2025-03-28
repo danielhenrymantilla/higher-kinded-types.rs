@@ -53,7 +53,7 @@ jobs:
           args: ${{ matrix.cargo-locked }}
 
       - name: Cargo test (embed `README.md` + UI)
-        if: matrix.rust-toolchains != '1.65.0'
+        if: matrix.rust-toolchains != '1.79.0'
         uses: actions-rs/cargo@v1
         env:
           RUSTC_BOOTSTRAP: 1
