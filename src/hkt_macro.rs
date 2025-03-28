@@ -80,7 +80,7 @@ macro_rules! dispatch {($_:tt
             )?
             $($($if_not_cfg_fn_traits)?
                 $_ crate::ඞ::ForLt<
-                    dyn for<$lt> $_ crate::ඞ::WithLifetime<$lt, T = $T>,
+                    dyn for<$lt> $_ crate::ඞ::WithLifetime<$lt, Of = $T>,
                 >
             )?
         );

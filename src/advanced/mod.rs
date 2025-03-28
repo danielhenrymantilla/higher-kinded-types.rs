@@ -37,7 +37,7 @@ trait WithLifetime<'lt>
 :
     Send + Sync + Unpin
 {
-    type T : ?Sized;
+    type Of : ?Sized;
 }
 
 #[cfg(not(feature = "fn_traits"))]
@@ -46,7 +46,7 @@ impl<'lt, T : ?Sized + WithLifetime<'lt>>
 for
     crate::ඞ::ForLt<T>
 {
-    type T = T::T;
+    type Of = T::Of;
 }
 
 /// Same as [`ForLifetime`], but for having a `: ?Sized` "unbound" on its [`Of<'_>`][Self::Of]
@@ -97,14 +97,14 @@ trait ForLifetimeMaybeUnsized : crate::seal::WithLifetimeForAny {
 /// [`ForLt`]: trait@crate::ForLt
 impl<T : ?Sized> ForLifetime for T
 where
-    Self : for<'any> WithLifetime<'any, T : Sized>,
+    Self : for<'any> WithLifetime<'any, Of : Sized>,
 {
-    type Of<'lt> = <Self as WithLifetime<'lt>>::T;
+    type Of<'lt> = <Self as WithLifetime<'lt>>::Of;
 }
 
 impl<T : ?Sized> ForLifetimeMaybeUnsized for T
 where
     Self : for<'any> WithLifetime<'any>,
 {
-    type Of<'lt> = <Self as WithLifetime<'lt>>::T;
+    type Of<'lt> = <Self as WithLifetime<'lt>>::Of;
 }

@@ -93,5 +93,5 @@ where
     F : FnOnce<(Input<'lt>, )>,
     F : Send + Sync + Unpin,
 {
-    type T = F::Output;
+    type Of = F::Output;
 }
