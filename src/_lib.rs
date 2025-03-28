@@ -22,7 +22,7 @@ pub
 mod prelude {
     #[doc(no_inline)]
     pub use crate::{
-        advanced::ForLifetimeMaybeUnsized,
+        advanced::{extra_arities::For, ForLifetimeMaybeUnsized},
         ForLt,
         ForLifetime,
     };
@@ -38,7 +38,6 @@ mod ඞ {
                 extra_arities::{
                     for_lt_and_lt::WithLifetimes,
                 },
-                WithLifetime,
             },
         },
     };

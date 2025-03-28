@@ -12,7 +12,7 @@
 //! That is, no amount of stable-polyfill _à la_:
 //!
 //! ```rust ,compile_fail
-//! use ::higher_kinded_types::{*, ඞ::WithLifetime};
+//! use ::higher_kinded_types::{*, advanced::WithLifetime};
 //!
 //! type For<'lt> = &'lt ();
 //!
@@ -25,7 +25,7 @@
 //!     F : FnOnce(For<'lt>) -> R,
 //!     F : Send + Sync + Unpin,
 //! {
-//!     type T = R;
+//!     type Of = R;
 //! }
 //!
 //! impl<'lt, F> WithLifetime<'lt> for B<F>
@@ -33,7 +33,7 @@
 //!     F : MyFnOnce<For<'lt>>,
 //!     F : Send + Sync + Unpin,
 //! {
-//!     type T = F::Ret;
+//!     type Of = F::Ret;
 //! }
 //!
 //!     trait MyFnOnce<A>

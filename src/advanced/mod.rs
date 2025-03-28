@@ -69,8 +69,6 @@ for
 /// one can use the type <code>[ForLt!]\(T::Of\<\'_\>\)</code> to get "back" a type which behaves
 /// like `T`, but which happens to implement both traits.
 ///
-///   - and _vice versa_.
-///
 /// ```rust
 /// use ::higher_kinded_types::{ForLt, ForLifetime, advanced::ForLifetimeMaybeUnsized};
 ///
@@ -82,6 +80,21 @@ for
 ///
 /// generic_over_sized::<ForLt!(&str)>();
 /// ```
+///
+///   - and _vice versa_:
+///
+///     ```rust
+///     use ::higher_kinded_types::{ForLt, ForLifetime, advanced::ForLifetimeMaybeUnsized};
+///
+///     fn generic_over_maybe_unsized<T : for<'any> ForLifetimeMaybeUnsized<Of<'any> : Sized>>() {
+///         generic_over_sized::<ForLt!(T::Of<'_>)>();
+///     }
+///
+///     fn generic_over_sized<T : ForLifetime>() {
+///     }
+///
+///     generic_over_maybe_unsized::<ForLt!(&str)>();
+///     ```
 pub
 trait ForLifetimeMaybeUnsized : crate::seal::WithLifetimeForAny {
     /// "Instantiate lifetime" / "apply/feed lifetime" operation:
