@@ -16,12 +16,9 @@
 //! ```rust
 //! # use ::higher_kinded_types::prelude::*;
 //! #
-//! // Alas, for an equality bound using a _fixed_ rather than a `for<>` lifetime, naming
-//! // the internal `ForLifetimeUnsized` super trait is necessary.
-//! // Otherwise, the opaque `Of<'not_s> : Sized` type conflicts with `Of<'s> = &'s str`.
-//! fn f<'s, T : ForLifetimeUnsized>(s: &'s str)
+//! fn f<'s, T : ForLt>(s: &'s str)
 //! where
-//!     T : ForLifetimeUnsized<Of<'s> = &'s str>,
+//!     T : ForLt<Of<'s> = &'s str>,
 //! {
 //!     let _: T::Of<'s> = s;
 //! }

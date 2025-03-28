@@ -22,10 +22,9 @@ pub
 mod prelude {
     #[doc(no_inline)]
     pub use crate::{
-        advanced::ForLifetimeUnsized,
+        advanced::ForLifetimeMaybeUnsized,
         ForLt,
         ForLifetime,
-        Feed,
     };
 }
 
@@ -269,13 +268,13 @@ mod utils;
 ///         <details class="custom"><summary><span class="summary-box"><span>Click to show</span></span></summary>
 ///
 ///         ```rust
-///         use ::higher_kinded_types::{ForLt, Feed};
+///         use ::higher_kinded_types::ForLt;
 ///
 ///         trait LendingIterator {
 ///             /// Look ma, "no" GATs!
 ///             type Item: ForLt;
 ///
-///             fn next(&mut self) -> Feed<'_, Self::Item>;
+///             fn next(&mut self) -> <Self::Item as ForLt>::Of<'_>;
 ///         }
 ///         ```
 ///
@@ -426,19 +425,22 @@ mod utils;
 ///
 /// This is where [`ForLt!`] and HKTs, thus, shine.
 pub
-trait ForLifetime
+trait ForLifetime : seal::WithLifetimeAny
 where
-    Self : for<'any> advanced::ForLifetimeUnsized<Of<'any> : Sized>,
-{}
-// type alias.
-impl<T : ?Sized> ForLifetime for T
-where
-    Self : for<'any> advanced::ForLifetimeUnsized<Of<'any> : Sized>,
-{}
+    // Self : for<'any> advanced::ForLifetimeMaybeUnsized<Of<'any> : Sized>,
+{
+    /// "Instantiate lifetime" / "apply/feed lifetime" operation:
+    ///
+    ///   - Given <code>\<T : [ForLifetime]\></code>,
+    ///
+    ///     `T::Of<'lt>` stands for the HKT-conceptual `T<'lt>` type.
+    type Of<'__>;
+}
 
-/// Apply/feed a `'lifetime` to a <code>T : [ForLifetime]</code> (or
-/// <code>T : [advanced::ForLifetimeUnsized]</code>).
-pub type Feed<'lifetime, T> = <T as advanced::ForLifetimeUnsized>::Of<'lifetime>;
+mod seal {
+    pub trait WithLifetimeAny {}
+    impl<T : ?Sized + for<'any> crate::advanced::WithLifetime<'any>> WithLifetimeAny for T {}
+}
 
 /// Shorthand alias.
 #[doc(no_inline)]

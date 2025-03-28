@@ -6,6 +6,8 @@
 //! [`ForLt`]: trait@crate::ForLt
 //! [`ForLt!`]: crate::ForLt!
 
+use super::*;
+
 pub
 mod extra_arities;
 
@@ -20,8 +22,8 @@ mod type_eq;
 /// for the stdlib [`Fn…`][FnOnce] traits to be ergonomic and useful, it is paramount to have
 /// literal `|…| { … }` closures expressions as the dual construct.
 ///
-/// And the trick to achieve producing an, on-the-fly, `impl ForLt` type, _i.e._, an, on-the-fly,
-/// type which `for<'any_lt>`, associates a type to such `'any_lt`, is to involve a
+/// And the trick to achieve producing an on-the-fly `impl ForLt` type, _i.e._, an on-the-fly
+/// type which associates, `for</* any */ 'lifetime>`, a type to such `'lifetime`, is to involve a
 /// `dyn for<'any_lt> SomeTrait<'any_lt, Assoc = …>` of some sorts.
 ///
 /// [`WithLifetime`] is such a `SomeTrait`.
@@ -29,9 +31,7 @@ mod type_eq;
 /// Actual usefulness of this trait for downstream users is to be seen, but since there seemed to be
 /// some interest, let's expose it and see how users end up using it.
 ///
-/// [ForLt]: trait@crate::ForLt
-/// [ForLt!]: crate::ForLt!
-/// [`ForLt!`]: crate::ForLt!
+/// [ForLt]: trait@ForLt
 pub
 trait WithLifetime<'lt>
 :
@@ -49,31 +49,60 @@ for
     type T = T::T;
 }
 
-/// Same of [`ForLifetime`], but for having a `: ?Sized` "unbound" on the [`Of<'_>`][Self::Of]
+/// Same as [`ForLifetime`], but for having a `: ?Sized` "unbound" on its [`Of<'_>`][Self::Of]
 /// associated type.
 ///
-/// In order for <code>T : [ForLifetime]</code> to also be <code>: [ForLifetimeUnsized]</code>,
-/// this needs to be defined as a super-trait of [`ForLifetime`], and the `type Of<'_>` item needs
-/// to be _moved_ (_e.g._, rather than copied to) here.
+/// ## Relation to [`ForLifetime`]
 ///
-/// [ForLifetime]: crate::ForLifetime
-/// [`ForLifetime`]: crate::ForLifetime
+/// There is currently none whatsoever (no blanket impl nor super-trait). This has been done on
+/// purpose to avoid hindering the ergonomics of [`ForLifetime`] too much, which remains the
+/// favored/preferred/deemed-more-useful flavor of the two traits.
+///
+/// There is, however, one connecting thing and redeeming factor: [`ForLt!`].
+///
+/// Indeed, the [`ForLt!`] macro produces a type which implements the necessary
+/// <code>for\<\'any\> [WithLifetime]\<\'any\></code> which thereby makes it satisfy _both_
+/// [`ForLifetime`] and [`ForLifetimeMaybeUnsized`] (assuming the type in it to be [`Sized`], else it
+/// will only satisfy the latter, obviously).
+///
+/// This means that when dealing with an opaque <code>T : [ForLifetime]</code>, for instance,
+/// one can use the type <code>[ForLt!]\(T::Of\<\'_\>\)</code> to get "back" a type which behaves
+/// like `T`, but which happens to implement both traits.
+///
+///   - and _vice versa_.
+///
+/// ```rust
+/// use ::higher_kinded_types::{ForLt, ForLifetime, advanced::ForLifetimeMaybeUnsized};
+///
+/// fn generic_over_both<T : ForLifetimeMaybeUnsized>() {}
+///
+/// fn generic_over_sized<T : ForLifetime>() {
+///     generic_over_both::<ForLt!(T::Of<'_>)>();
+/// }
+///
+/// generic_over_sized::<ForLt!(&str)>();
+/// ```
 pub
-trait ForLifetimeUnsized {
+trait ForLifetimeMaybeUnsized : crate::seal::WithLifetimeAny {
     /// "Instantiate lifetime" / "apply/feed lifetime" operation:
     ///
-    ///   - Given <code>\<T : [ForLifetime{,Unsized}][ForLifetimeUnsized]\></code>,
+    ///   - Given <code>\<T : [ForLifetimeMaybeUnsized]\></code>,
     ///
     ///     `T::Of<'lt>` stands for the HKT-conceptual `T<'lt>` type.
-    ///
-    /// [ForLt]: trait@ForLt
     type Of<'lt> : ?Sized;
 }
 
 /// The key connection between [`ForLt`] and [`WithLifetime`].
 ///
 /// [`ForLt`]: trait@crate::ForLt
-impl<T : ?Sized> ForLifetimeUnsized for T
+impl<T : ?Sized> ForLifetime for T
+where
+    Self : for<'any> WithLifetime<'any, T : Sized>,
+{
+    type Of<'lt> = <Self as WithLifetime<'lt>>::T;
+}
+
+impl<T : ?Sized> ForLifetimeMaybeUnsized for T
 where
     Self : for<'any> WithLifetime<'any>,
 {
