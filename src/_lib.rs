@@ -22,6 +22,7 @@ pub
 mod prelude {
     #[doc(no_inline)]
     pub use crate::{
+        advanced::ForLifetimeMaybeUnsized,
         ForLt,
         ForLifetime,
     };
@@ -424,17 +425,20 @@ mod utils;
 ///
 /// This is where [`ForLt!`] and HKTs, thus, shine.
 pub
-trait ForLifetime
-// where
-//     Self : for<'any> WithLifetime<'any>,
-{
+trait ForLifetime : seal::WithLifetimeForAny {
     /// "Instantiate lifetime" / "apply/feed lifetime" operation:
+    ///
     ///   - Given <code>\<T : [ForLt]\></code>,
     ///
     ///     `T::Of<'lt>` stands for the HKT-conceptual `T<'lt>` type.
     ///
     /// [ForLt]: trait@ForLt
     type Of<'lt>;
+}
+
+mod seal {
+    pub trait WithLifetimeForAny {}
+    impl<T : ?Sized + for<'any> crate::advanced::WithLifetime<'any>> WithLifetimeForAny for T {}
 }
 
 /// Shorthand alias.

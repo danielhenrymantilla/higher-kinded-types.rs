@@ -14,7 +14,7 @@
 //! In that case, you can actually just write the corresponding real code:
 //!
 //! ```rust
-//! # use ::higher_kinded_types::ForLt;
+//! # use ::higher_kinded_types::prelude::*;
 //! #
 //! fn f<'s, T : ForLt>(s: &'s str)
 //! where
@@ -62,11 +62,11 @@
 //! ```rust
 //! use ::higher_kinded_types::{ForLt, advanced::type_eq::{self, Is}};
 //!
-//! fn f<'a, T : ForLt>(a: &'a str)
+//! fn f<'s, T : ForLt>(a: &'s str)
 //! where
-//!     T::Of<'a> : Is<EqTo = &'a str>,
+//!     T::Of<'s> : Is<EqTo = &'s str>,
 //! {
-//!     let _: T::Of<'a> = type_eq::cast_left::<T::Of<'a>>(a);
+//!     let _: T::Of<'s> = type_eq::cast_left::<T::Of<'s>>(a);
 //! }
 //! ```
 //!
