@@ -16,7 +16,7 @@ documentation = "https://docs.rs/higher-kinded-types"
 readme = "README.md"
 
 description = """"Generic generics" / higher-kinded APIs in stable Rust"""
-keywords = ["higher-kinded-types", "HKT", "gaGATt", "lending-iterator", "lifetime"]
+keywords = ["higher-kinded-types", "HKT", "gat", "lending-iterator", "lifetime"]
 
 [features]
 docs-rs = [
