@@ -7,7 +7,7 @@ name = "higher-kinded-types"
 authors = [
     "Daniel Henry-Mantilla <daniel.henry.mantilla@gmail.com>",
 ]
-version = "0.2.0"  # Keep in sync
+version = "0.3.0-rc1"  # Keep in sync
 edition = "2021"
 
 license = "Zlib OR MIT OR Apache-2.0"
