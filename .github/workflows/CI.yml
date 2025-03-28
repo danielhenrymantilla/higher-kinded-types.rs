@@ -9,12 +9,12 @@ on:
 jobs:
   # == CHECK == #
   check:
-    name: "Check beta stable and MSRV=1.65.0"
+    name: "Check beta stable and MSRV=1.79.0"
     runs-on: ubuntu-latest
     strategy:
       matrix:
         rust-toolchains:
-          - 1.65.0
+          - 1.79.0
           - stable
           # Try to guard against a near-future regression.
           - beta
@@ -23,7 +23,7 @@ jobs:
           - ''
         exclude:
           # MSRV guarantee only stands for `.lock`-tested dependencies.
-          - rust-toolchains: 1.65.0
+          - rust-toolchains: 1.79.0
             cargo-locked: ''
     steps:
       - name: Install Rust toolchain
@@ -59,7 +59,7 @@ jobs:
           - macos-latest
           - windows-latest
         rust-toolchains:
-          - 1.65.0
+          - 1.79.0
           - stable
     steps:
       - name: Install Rust toolchain

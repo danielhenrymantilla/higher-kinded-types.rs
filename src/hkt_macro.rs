@@ -50,7 +50,7 @@ macro_rules! dispatch {($_:tt
     /// ### Examples
     ///
     /// ```rust
-    /// use ::higher_kinded_types::ForLt;
+    /// use ::higher_kinded_types::prelude::{*, ForLt};
     ///
     /// type A = ForLt!(<'r> = &'r str);
     /// // the following two definitions are equivalent to A (syntax sugar).
@@ -80,7 +80,7 @@ macro_rules! dispatch {($_:tt
             )?
             $($($if_not_cfg_fn_traits)?
                 $_ crate::ඞ::ForLt<
-                    dyn for<$lt> $_ crate::ඞ::WithLifetime<$lt, T = $T>,
+                    dyn for<$lt> $_ crate::advanced::WithLifetime<$lt, Of = $T>,
                 >
             )?
         );
