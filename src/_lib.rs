@@ -2,13 +2,13 @@
 #![doc = include_str!("../README.md")]
 #![no_std]
 #![forbid(unsafe_code)]
-#![allow(type_alias_bounds, uncommon_codepoints)]
+#![allow(type_alias_bounds, uncommon_codepoints, unused_braces)]
 #![allow(
     // in case `crate::ForLt!` does not resolve, we have the `crate::hkt_macro::*` fallback.
     macro_expanded_macro_exports_accessed_by_absolute_paths,
 )]
 #![cfg_attr(feature = "better-docs",
-    feature(decl_macro, doc_cfg, rustc_attrs, trait_alias),
+    feature(decl_macro, doc_cfg, trait_alias),
 )]
 #![cfg_attr(feature = "fn_traits",
     feature(unboxed_closures),
@@ -24,7 +24,6 @@ mod prelude {
     pub use crate::{
         ForLt,
         ForLifetime,
-        extra_arities::*,
     };
 }
 
@@ -34,10 +33,10 @@ mod ඞ {
     pub use {
         ::core, // or `std`
         crate::{
-            extra_arities::{
-                for_lt_and_lt::WithLifetimes,
-            },
-            with_lifetime::{
+            advanced::{
+                extra_arities::{
+                    for_lt_and_lt::WithLifetimes,
+                },
                 WithLifetime,
             },
         },
@@ -69,17 +68,12 @@ mod ඞ {
     use ::never_say_never::Never as ǃ;
 }
 
-use {
-    crate::{
-        with_lifetime::WithLifetime,
-    },
-};
 
 #[cfg_attr(feature = "docs-rs",
     doc(cfg(advanced)),
 )]
 pub
-mod extra_arities;
+mod advanced;
 
 #[cfg(feature = "fn_traits")]
 mod fn_traits;
@@ -91,31 +85,7 @@ mod hkt_macro;
 
 mod hkt_muncher;
 
-#[cfg_attr(feature = "docs-rs",
-    doc(cfg(advanced)),
-)]
-pub
-mod type_eq;
-
 mod utils;
-
-mod with_lifetime {
-    pub
-    trait WithLifetime<'lt>
-    :
-        Send + Sync + Unpin
-    {
-        type T;
-    }
-
-    impl<'lt, T : ?Sized + WithLifetime<'lt>>
-        WithLifetime<'lt>
-    for
-        crate::ඞ::ForLt<T>
-    {
-        type T = T::T;
-    }
-}
 
 /// The main trait of the crate. The one expressing `: <'_>`-genericity.
 ///
@@ -149,7 +119,7 @@ mod with_lifetime {
 ///   - "Arrow-Kinded Type": `… -> *`, such as `ForLt!(<'a> = &'a str) : ForLt`.
 ///   - Higher-Kinded Type: `(… -> *) -> *`, such as `struct Example<T : ForLt>`.
 ///
-/// [`: For`-bounded]: extra_arities/index.html
+/// [`: For`-bounded]: advanced::extra_arities
 ///
 /// [ForLt]: trait@ForLt
 /// [`ForLt`]: trait@ForLt
@@ -454,7 +424,7 @@ mod with_lifetime {
 ///
 /// This is where [`ForLt!`] and HKTs, thus, shine.
 pub
-trait ForLifetime : seal::Sealed
+trait ForLifetime
 // where
 //     Self : for<'any> WithLifetime<'any>,
 {
@@ -470,22 +440,6 @@ trait ForLifetime : seal::Sealed
 /// Shorthand alias.
 #[doc(no_inline)]
 pub use ForLifetime as ForLt;
-
-mod seal {
-    pub trait Sealed : Send + Sync + Unpin {}
-    #[cfg(not(feature = "better-docs"))]
-    impl<T : ?Sized> Sealed for crate::ඞ::ForLt<T> {}
-    #[cfg(feature = "better-docs")]
-    impl<T : ?Sized> Sealed for T where Self : Send + Sync + Unpin {}
-}
-
-#[doc(hidden)]
-impl<T : ?Sized> ForLt for T
-where
-    Self : for<'any> WithLifetime<'any> + seal::Sealed,
-{
-    type Of<'lt> = <Self as WithLifetime<'lt>>::T;
-}
 
 crate::utils::cfg_match! {
     feature = "better-docs" => (

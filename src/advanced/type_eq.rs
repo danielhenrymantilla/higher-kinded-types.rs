@@ -1,4 +1,3 @@
-//! Niche and advanced, you can ignore this to begin with.
 //! Module for type-equality hacks.
 //!
 //! In certain scenarios, you may have a `T : ForLt` in scope which you want to
@@ -61,7 +60,7 @@
 //! functions:
 //!
 //! ```rust
-//! use ::higher_kinded_types::{ForLt, type_eq::{self, Is}};
+//! use ::higher_kinded_types::{ForLt, advanced::type_eq::{self, Is}};
 //!
 //! fn f<'a, T : ForLt>(a: &'a str)
 //! where
@@ -83,7 +82,7 @@
 //!
 //! See, for instance, [`cast_wrapper_right`] and its documentation example.
 
-use crate::extra_arities::ForTy as ForType;
+use crate::advanced::extra_arities::ForTy as ForType;
 
 pub
 trait Is {
@@ -143,7 +142,7 @@ fn cast_left<T>(it: <T as Is>::EqTo)
 /// [::Of]: ForType
 ///
 /// ```rust
-/// use ::higher_kinded_types::{
+/// use ::higher_kinded_types::advanced::{
 ///     extra_arities::{For, new_For_type},
 ///     type_eq::{cast_wrapper_right, Is},
 /// };

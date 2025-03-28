@@ -81,12 +81,14 @@ error: implementation of `WithLifetime` is not general enough
    = note: ...but it actually implements `WithLifetime<'1>`, for some specific lifetime `'1`
 **/
 
-use super::*;
+use crate::advanced::WithLifetime;
 
 pub
-struct Input<'lt>(*mut Self);
+struct Input<'lt> {
+   _0: *mut Self,
+}
 
-impl<'lt, F> WithLifetime<'lt> for F
+impl<'lt, F> WithLifetime<'lt> for crate::ඞ::ForLt<F>
 where
     F : FnOnce<(Input<'lt>, )>,
     F : Send + Sync + Unpin,
