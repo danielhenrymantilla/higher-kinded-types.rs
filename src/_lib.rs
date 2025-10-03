@@ -22,10 +22,12 @@ pub
 mod prelude {
     #[doc(no_inline)]
     pub use crate::{
-        ForLt,
         ForLifetime,
         extra_arities::*,
+        ForLifetime as ForLt,
     };
+    #[doc(inline)]
+    pub use crate::hkt_macro::ForLt;
 }
 
 // macro internals
@@ -85,8 +87,8 @@ mod extra_arities;
 mod fn_traits;
 
 #[allow(unused_imports)]
-#[doc(hidden)]
-pub use hkt_macro::*;
+#[doc(inline)]
+pub use hkt_macro::ForLt;
 mod hkt_macro;
 
 mod hkt_muncher;
