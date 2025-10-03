@@ -17,6 +17,8 @@ mod type_eq;
 /// The [`::nougat`](https://docs.rs/nougat) of this crate, which allows "expressing `dyn`-safe
 /// <code>impl [ForLt]</code> types", sort to speak.
 ///
+/// [ForLt]: trait@ForLt
+///
 /// The idea is that in order for the <code>: [ForLt]</code> design to be ergonomic,
 /// it is paramount to have a [`ForLt!`]-like companion construct, in the same fashion that in order
 /// for the stdlib [`Fn…`][FnOnce] traits to be ergonomic and useful, it is paramount to have
@@ -28,10 +30,119 @@ mod type_eq;
 ///
 /// [`WithLifetime`] is such a `SomeTrait`.
 ///
-/// Actual usefulness of this trait for downstream users is to be seen, but since there seemed to be
-/// some interest, let's expose it and see how users end up using it.
+/// # What for?
 ///
-/// [ForLt]: trait@ForLt
+/// You may wonder why is this trait exposed, what usage can a downstream user possibly make of it.
+///
+/// The answer lies in an important aspect of the implementation of [`ForLt!`]:
+///
+/// > **[`ForLt!()`] types implement <code>for\<\'any\> [WithLifetime]\<\'any, …\></code>**
+///
+/// This in turn, means that it is possible **for downstream users to define their own flavors of
+/// the [`ForLifetime`] traits, _with their own custom trait bounds on the end type_**.
+///
+/// ## Example
+///
+/// Defining a `ForLifetimeDebug` trait:
+///
+/// ```rust
+/// use ::core::fmt::Debug;
+/// use ::higher_kinded_types::{ForLt, advanced::WithLifetime};
+///
+/// pub trait ForLifetimeDebug {
+///     /// You may name this associated type as you like, although consistency with the other
+///     /// `ForLifetime` traits make the `Of` naming strongly advisable.
+///     type Of<'lt> : Debug + Sized;
+///     //                   ^^^^^^^
+///     //                   Note: `WithLifetime` defaults to a `?Sized` "output" `Of` type.
+///     //                   So it is advisable to be explicit about `Sized` vs. `?Sized`.
+/// }
+///
+/// //             satisfied by every `ForLt!()` invocation
+/// //                vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
+/// impl<T : ?Sized + for<'any> WithLifetime<'any, Of : Debug + Sized>>
+///     ForLifetimeDebug
+/// for
+///     T
+/// {
+///     type Of<'lt> = <T as WithLifetime<'lt>>::Of;
+/// }
+///
+/// // we have now defined a
+/// // `trait alias ForLifetimeDebug = for<'any> WithLifetime<'any, Of : Debug + Sized>`.
+/// // Note that this ought to be equivalent to having defined a
+/// // `trait alias ForLifetimeDebug = for<'any> ForLifetimeMaybeUnsized<Of<'any> : Debug + Sized>`
+/// // i.e.,
+/// // `trait alias ForLifetimeDebug = for<'any> ForLifetime<Of<'any> : Debug>`
+/// // i.e.,
+/// // `trait alias ForLifetimeDebug = for<'any> ForLt<Of<'any> : Debug>`
+/// //
+/// // Maybe having targeted these other traits could have worked just as fine, but Rust is
+/// // notorious for eventually running into bugs and limitations when mixing
+/// // higher-ranked/`for<>`-quantified trait bounds and GATs together, so it may be more robust
+/// // and thus advisable to go back to the "source nougat" of `WithLifetime` for these new
+/// // definitions, we never know.
+///
+/// /// Example usage
+/// fn example<T>(
+///     f: impl Fn(&str) -> T::Of<'_>,
+/// ) -> String
+/// where
+///     T : ForLifetimeDebug,   /*
+///     // above ought to be equivalent to having inlined a:
+///     T : for<'any> ForLt<Of<'any> : Debug>,
+///     // kind of bound.       */
+/// {
+///     let local = String::from("Hello, there");
+///     let value: T::Of<'_> = f(&*local);
+///     format!("{value:?}")
+/// }
+///
+/// assert_eq!(
+///     example::<ForLt!(Option<&str>)>(|s| s.get(..4)),
+///     format!("{:?}", Some("Hell")),
+/// );
+/// ```
+///
+///   - Although it looks like a similar snippet having used
+///     <code>for\<\'any\> [ForLt]\<[Of][ForLt::Of]\<\'any\> : [Debug]\></code>
+///     for the "`trait alias` definition" would have behaved exactly the same
+///     as this `[WithLifetime]`-using snippet…
+///
+///     Maybe there is no point in exposing this trait after all? 😅
+///
+/// # Another usage: forgoing / circumventing / bypassing / DIYing the [`ForLt!`] macro
+///
+/// It could be useful for those loath to use a "magic macro" such as [`ForLt!`], so that they
+/// could instead spell out the full `dyn for<'any> WithLifetime<'any, Of = …>` type (hopefully
+/// wrapped in a `Sized` newtype to avoid requiring `<T : ForLt>` APIs to add a `T : ?Sized`
+/// unbound).
+///
+/// Or maybe they could want to use their own macro of this sort, wherein they could add some extra
+/// autotraits:
+///
+/// ```rust
+/// #[macro_export] macro_rules! foo {() => ()}
+/// ```
+///
+/// ```rust
+/// #[macro_export] macro_rules! foo {() => ()}
+/// ```
+///
+/// ```rust
+/// use ::higher_kinded_types::{ForLt, advanced::WithLifetime};
+/// use ::std::panic::UnwindSafe as WhatAJoke;
+///
+/// macro_rules! MyUnwindSafeForLt {( $T:ty $(,)? ) => (
+///   dyn ::std::panic::UnwindSafe
+///     + for<'any>
+///       ::higher_kinded_types::advanced::WithLifetime<'any, Of = <ForLt!($T) as ForLt>::Of<'any>>
+/// )}
+///
+/// const _: &dyn WhatAJoke = &::core::marker::PhantomData::<
+///     MyUnwindSafeForLt!(&str)
+/// >;
+/// ```
 pub
 trait WithLifetime<'lt>
 :
@@ -120,4 +231,30 @@ where
     Self : for<'any> WithLifetime<'any>,
 {
     type Of<'lt> = <Self as WithLifetime<'lt>>::Of;
+}
+
+#[cfg(any())]
+mod demo {
+    extern crate self as higher_kinded_types;
+    use ::core::fmt::Debug;
+    use higher_kinded_types::ForLt;
+
+    use super::{ForLifetimeMaybeUnsized, WithLifetime};
+
+    trait ForLtDebug {
+        type Of<'__> : Debug;
+    }
+    impl<T : ?Sized + for<'any> ForLt<Of<'any> : Debug>> ForLtDebug for T {
+        type Of<'lt> = <T as ForLt>::Of<'lt>;
+    }
+
+    fn rust_bug<'s, T>()
+    where
+        // T : ForLtDebug,
+        // T : ForLtDebug<Of<'s> = &'s str>,
+        T : for<'any> ForLt<Of<'any> : Debug>,
+        T : ForLt<Of<'s> = &'s str>,
+        // T : for<'any> WithLifetime<'any, Of : Debug>,
+        // T :           WithLifetime<'s, Of = &'s str>,
+    {}
 }

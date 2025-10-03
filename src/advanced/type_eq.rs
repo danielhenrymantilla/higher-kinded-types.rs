@@ -49,7 +49,7 @@
 //! Hence the trait [`Is`]. Alas, it does come with some caveats, since when
 //!
 //! ```rust
-//! # #[cfg(any)] macro_rules! ignore {
+//! # #[cfg(any())] macro_rules! ignore {
 //! T : Is<EqTo = U>,
 //! # }
 //! ```
