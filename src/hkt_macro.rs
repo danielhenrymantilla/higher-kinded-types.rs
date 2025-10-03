@@ -67,8 +67,8 @@ macro_rules! dispatch {($_:tt
     /// let b: <B as ForLt>::Of<'static> = "b";
     /// let c: <C as ForLt>::Of<'static> = "c";
     /// ```
-    #[macro_export]
-    macro_rules! ForLt {
+    #[macro_export] #[doc(hidden)]
+    macro_rules! ඞForLt {
         (
             // Named lifetime case: e.g. `ForLt!(<'r> = &'r str)`.
             <$lt:lifetime> = $T:ty $_(,)?
@@ -106,5 +106,11 @@ macro_rules! dispatch {($_:tt
             )?
         );
     }
+    /// ```rust
+    /// type A = ::higher_kinded_types::ForLt![()];
+    /// type B = ::higher_kinded_types::prelude::ForLt![()];
+    /// ```
+    #[doc(inline)]
+    pub use ඞForLt as ForLt;
 )}
 use dispatch;
