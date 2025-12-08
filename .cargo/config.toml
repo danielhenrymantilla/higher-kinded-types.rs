@@ -10,5 +10,5 @@ rustdocflags = [
     "--html-before-content", "fix-docsrs-li-details-summary.html",
 ]
 
-# [profile.docs]
-# inherits = "dev"
+[profile.docs]
+inherits = "dev"
