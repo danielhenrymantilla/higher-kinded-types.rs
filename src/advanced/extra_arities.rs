@@ -1,4 +1,3 @@
-//! Niche and advanced, you can ignore this to begin with.
 //! Module for other [`ForLt`]-like constructs: extended to various "arities".
 //!
 //! For instance:
@@ -52,7 +51,7 @@ trait ForTy : Send + Sync + Unpin {
 ///         task::Context,
 ///     },
 ///     ::higher_kinded_types::{
-///         extra_arities::*,
+///         advanced::extra_arities::*,
 ///     },
 /// };
 ///
@@ -91,7 +90,7 @@ trait ForLtAndTy : Send + Sync + Unpin {
 /// ## Example
 ///
 /// ```rust
-/// use ::higher_kinded_types::extra_arities::*;
+/// use ::higher_kinded_types::advanced::extra_arities::*;
 ///
 /// //                                👇
 /// fn higher_kinded_api<'caller, T : CovariantForLt>(
@@ -121,7 +120,7 @@ trait ForLtAndTy : Send + Sync + Unpin {
 /// ### Counter-example
 ///
 /// ```rust ,compile_fail
-/// use ::higher_kinded_types::extra_arities::*;
+/// use ::higher_kinded_types::advanced::extra_arities::*;
 ///
 /// new_For_type! {
 ///     type NotCov = For!(#![covariant]<'r> = &'r mut &'r str);
@@ -175,7 +174,7 @@ trait CovariantForLt {
 ///   - #### `ForLt`
 ///
 ///     ```rust
-///     # use ::higher_kinded_types::extra_arities::For;
+///     # use ::higher_kinded_types::advanced::extra_arities::For;
 ///     # mod some { pub use ::std::borrow::Cow as Arbitrary; }
 ///     # use str as Type; let _:
 ///     For!(<'r> = some::Arbitrary<'r, Type>)
@@ -188,7 +187,7 @@ trait CovariantForLt {
 ///   - #### `ForLtAndLt`
 ///
 ///     ```rust
-///     # use ::higher_kinded_types::extra_arities::For;
+///     # use ::higher_kinded_types::advanced::extra_arities::For;
 ///     # mod some { pub type Arbitrary<'a, 'b, T> = &'a &'b T; }
 ///     # use str as Type; let _:
 ///     For!(<'a, 'b> = some::Arbitrary<'a, 'b, Type>)
@@ -272,7 +271,7 @@ new_For_type! {
         $pub
         struct $Name(fn(&()) -> &mut Self);
 
-        impl $crate::extra_arities::ForTy for $Name {
+        impl $crate::advanced::extra_arities::ForTy for $Name {
             type Of<$T> = $Type;
         }
     );
@@ -286,7 +285,7 @@ new_For_type! {
         $pub
         struct $Name(fn(&()) -> &mut Self);
 
-        impl $crate::extra_arities::ForLtAndTy for $Name {
+        impl $crate::advanced::extra_arities::ForLtAndTy for $Name {
             type Of<$lt, $T : $lt> = $Type;
         }
     );
@@ -300,7 +299,7 @@ new_For_type! {
         $pub
         struct $Name(fn(&()) -> &mut Self);
 
-        impl $crate::extra_arities::CovariantForLt for $Name {
+        impl $crate::advanced::extra_arities::CovariantForLt for $Name {
             type Of<$lt> = $Type
             where
                 Self : $lt,
@@ -331,7 +330,7 @@ new_For_type! {
         < $($rest:tt)*
     ) => (
         $(#$attr)*
-        $pub type $Name = $crate::extra_arities::For!(< $($rest)* );
+        $pub type $Name = $crate::advanced::extra_arities::For!(< $($rest)* );
     );
 }
 
@@ -345,7 +344,7 @@ new_For_type! {
 /// ### `ForTy`
 ///
 /// ```rust
-/// use ::higher_kinded_types::extra_arities::*;
+/// use ::higher_kinded_types::advanced::extra_arities::*;
 ///
 /// new_For_type! {
 ///     /// Attributes such as docstrings are obviously allowed.
@@ -379,7 +378,7 @@ new_For_type! {
 /// ### `ForLtAndTy`
 ///
 /// ```rust
-/// use ::higher_kinded_types::extra_arities::*;
+/// use ::higher_kinded_types::advanced::extra_arities::*;
 ///
 /// new_For_type! {
 ///     type SharedRef = For!(<'r, T> = &'r T);

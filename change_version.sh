@@ -19,4 +19,4 @@ sed -i -E \
     README.md \
 ;
 
-cargo +stable update -v -w
+cargo update -v -w
