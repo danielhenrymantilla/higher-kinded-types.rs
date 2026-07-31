@@ -7,7 +7,7 @@ name = "higher-kinded-types"
 authors = [
     "Daniel Henry-Mantilla <daniel.henry.mantilla@gmail.com>",
 ]
-version = "0.3.0"  # Keep in sync
+version = "0.3.1"  # Keep in sync
 edition = "2024"
 
 license = "Zlib OR MIT OR Apache-2.0"
@@ -36,9 +36,9 @@ default = [
 fn_traits = []
 
 [dependencies]
-macro_rules_attribute.version = "0.2.0"
+macro_rules_attribute.version = "0.2.3"
 never-say-never.version = "6.6.666"
-paste.version = "1.0.14"
+pastey.version = "0.2.3"
 
 [dev-dependencies]
 
