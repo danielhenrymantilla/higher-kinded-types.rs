@@ -30,7 +30,7 @@ macro_rules! macro_export_ {(
     $( #$attr:tt )*
     macro_rules! $macro_name:ident $macro_rules:tt
 ) => (
-    ::paste::paste! {
+    ::pastey::paste! {
         #[doc(hidden)] #[macro_export]
         macro_rules! [< ඞ $macro_name >] $macro_rules
 

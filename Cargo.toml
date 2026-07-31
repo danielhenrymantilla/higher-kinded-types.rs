@@ -7,8 +7,8 @@ name = "higher-kinded-types"
 authors = [
     "Daniel Henry-Mantilla <daniel.henry.mantilla@gmail.com>",
 ]
-version = "0.2.0-rc1"  # Keep in sync
-edition = "2021"
+version = "0.3.1"  # Keep in sync
+edition = "2024"
 
 license = "Zlib OR MIT OR Apache-2.0"
 repository = "https://github.com/danielhenrymantilla/higher-kinded-types.rs"
@@ -16,7 +16,7 @@ documentation = "https://docs.rs/higher-kinded-types"
 readme = "README.md"
 
 description = """"Generic generics" / higher-kinded APIs in stable Rust"""
-keywords = ["higher-kinded-types", "HKT", "gaGATt", "lending-iterator", "lifetime"]
+keywords = ["higher-kinded-types", "HKT", "gat", "lending-iterator", "lifetime"]
 
 [features]
 docs-rs = [
@@ -36,9 +36,9 @@ default = [
 fn_traits = []
 
 [dependencies]
-macro_rules_attribute.version = "0.2.0"
+macro_rules_attribute.version = "0.2.3"
 never-say-never.version = "6.6.666"
-paste.version = "1.0.14"
+pastey.version = "0.2.3"
 
 [dev-dependencies]
 

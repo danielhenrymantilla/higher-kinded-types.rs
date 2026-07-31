@@ -50,7 +50,7 @@ macro_rules! dispatch {($_:tt
     /// ### Examples
     ///
     /// ```rust
-    /// use ::higher_kinded_types::ForLt;
+    /// use ::higher_kinded_types::prelude::{*, ForLt};
     ///
     /// type A = ForLt!(<'r> = &'r str);
     /// // the following two definitions are equivalent to A (syntax sugar).
@@ -67,8 +67,8 @@ macro_rules! dispatch {($_:tt
     /// let b: <B as ForLt>::Of<'static> = "b";
     /// let c: <C as ForLt>::Of<'static> = "c";
     /// ```
-    #[macro_export]
-    macro_rules! ForLt {
+    #[macro_export] #[doc(hidden)]
+    macro_rules! ඞForLt {
         (
             // Named lifetime case: e.g. `ForLt!(<'r> = &'r str)`.
             <$lt:lifetime> = $T:ty $_(,)?
@@ -80,7 +80,7 @@ macro_rules! dispatch {($_:tt
             )?
             $($($if_not_cfg_fn_traits)?
                 $_ crate::ඞ::ForLt<
-                    dyn for<$lt> $_ crate::ඞ::WithLifetime<$lt, T = $T>,
+                    dyn for<$lt> $_ crate::advanced::WithLifetime<$lt, Of = $T>,
                 >
             )?
         );
@@ -106,5 +106,11 @@ macro_rules! dispatch {($_:tt
             )?
         );
     }
+    /// ```rust
+    /// type A = ::higher_kinded_types::ForLt![()];
+    /// type B = ::higher_kinded_types::prelude::ForLt![()];
+    /// ```
+    #[doc(inline)]
+    pub use ඞForLt as ForLt;
 )}
 use dispatch;
