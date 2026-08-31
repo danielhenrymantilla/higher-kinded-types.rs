@@ -18,6 +18,10 @@ readme = "README.md"
 description = """"Generic generics" / higher-kinded APIs in stable Rust"""
 keywords = ["higher-kinded-types", "HKT", "gat", "lending-iterator", "lifetime"]
 
+[lints.rust.unexpected_cfgs]
+level = "warn"
+check-cfg = ['cfg(higher_kinded_types_ack_compile_fail_fix)']
+
 [features]
 docs-rs = [
     "better-docs",
