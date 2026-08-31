@@ -4,7 +4,7 @@ version = 4
 
 [[package]]
 name = "higher-kinded-types"
-version = "0.3.2-rc1"
+version = "0.3.2"
 dependencies = [
  "macro_rules_attribute",
  "never-say-never",
