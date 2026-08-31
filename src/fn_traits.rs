@@ -11,7 +11,8 @@
 //!
 //! That is, no amount of stable-polyfill _à la_:
 //!
-//! ```rust ,compile_fail
+#![cfg_attr(not(higher_kinded_types_ack_compile_fail_fix), doc = " ```rust ,compile_fail")]
+#![cfg_attr(higher_kinded_types_ack_compile_fail_fix, doc = " ```rust")]
 //! use ::higher_kinded_types::{*, advanced::WithLifetime};
 //!
 //! type For<'lt> = &'lt ();
@@ -59,9 +60,10 @@
 //! test::<B<StrRef>>(|s| s);
 //! ```
 //!
-//! is able to make it work.
+//! is able to make it work; it fails (but for `nightly` with `next-solver`) with the following:
 //!
-/** They yield:
+/*! ```rust ,compile_fail
+# let () = 42; /*
 error: implementation of `WithLifetime` is not general enough
   --> src/fn_traits.rs:59:1
    |
@@ -79,7 +81,8 @@ error: implementation of `WithLifetime` is not general enough
    |
    = note: `B<for<'r> fn(&'r ()) -> &'r str>` must implement `WithLifetime<'0>`, for any lifetime `'0`...
    = note: ...but it actually implements `WithLifetime<'1>`, for some specific lifetime `'1`
-**/
+# */
+```*/
 
 use crate::advanced::WithLifetime;
 

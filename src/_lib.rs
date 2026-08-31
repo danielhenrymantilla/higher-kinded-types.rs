@@ -8,11 +8,12 @@
     macro_expanded_macro_exports_accessed_by_absolute_paths,
 )]
 #![cfg_attr(feature = "better-docs",
-    feature(decl_macro, doc_cfg, trait_alias),
+    feature(doc_cfg, trait_alias),
 )]
 #![cfg_attr(feature = "fn_traits",
     feature(unboxed_closures),
 )]
+#![doc(test(attr(allow(unused, non_local_definitions))))]
 
 #[macro_use]
 extern crate macro_rules_attribute;
@@ -473,6 +474,7 @@ crate::utils::cfg_match! {
         ///     syntax: ASCII characters are easier to type with a standard
         ///     keyboard layout, contrary to `Ofᐸᑊ_ᐳ`, which will probably require
         ///     copy-pasting.
+        #[allow(unexpected_cfgs)]
         #[doc(cfg(educational))]
         pub trait Ofᐸᑊ_ᐳ = ForLt;
     );
