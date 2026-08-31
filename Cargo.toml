@@ -7,7 +7,7 @@ name = "higher-kinded-types"
 authors = [
     "Daniel Henry-Mantilla <daniel.henry.mantilla@gmail.com>",
 ]
-version = "0.3.1"  # Keep in sync
+version = "0.3.2"  # Keep in sync
 edition = "2024"
 
 license = "Zlib OR MIT OR Apache-2.0"
@@ -17,6 +17,10 @@ readme = "README.md"
 
 description = """"Generic generics" / higher-kinded APIs in stable Rust"""
 keywords = ["higher-kinded-types", "HKT", "gat", "lending-iterator", "lifetime"]
+
+[lints.rust.unexpected_cfgs]
+level = "warn"
+check-cfg = ['cfg(higher_kinded_types_ack_compile_fail_fix)']
 
 [features]
 docs-rs = [
