@@ -8,7 +8,7 @@ authors = [
     "Daniel Henry-Mantilla <daniel.henry.mantilla@gmail.com>",
 ]
 version = "0.3.2"  # Keep in sync
-edition = "2024"
+edition = "2021" # for 1.76.0 test; TODO: put 2024 back.
 
 license = "Zlib OR MIT OR Apache-2.0"
 repository = "https://github.com/danielhenrymantilla/higher-kinded-types.rs"
@@ -39,10 +39,17 @@ default = [
 
 fn_traits = []
 
+debug-macros = [
+    "higher-kinded-types-proc-macros/debug-macros",
+]
+
 [dependencies]
 macro_rules_attribute.version = "0.2.3"
 never-say-never.version = "6.6.666"
 pastey.version = "0.2.3"
+
+[dependencies.higher-kinded-types-proc-macros]
+path = "src/proc-macros"
 
 [dev-dependencies]
 
@@ -60,3 +67,4 @@ rustdoc-args = [
 ]
 
 [workspace]
+members = ["src/proc-macros"]

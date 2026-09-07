@@ -1,6 +1,6 @@
 //! [ForLifetime]: trait@ForLifetime
 #![doc = include_str!("../README.md")]
-#![no_std]
+#![cfg_attr(not(test), no_std)]
 #![forbid(unsafe_code)]
 #![allow(type_alias_bounds, uncommon_codepoints, unused_braces)]
 #![allow(
@@ -56,8 +56,8 @@ mod ඞ {
 
     /// Do not use this type!
     pub
-    struct ForLt<T : ?Sized>(
-        ::core::marker::PhantomData<fn(&()) -> &T>,
+    struct ForLt<T : ?Sized, Unit = ()>(
+        ::core::marker::PhantomData<fn(&(), Unit) -> &T>,
         ǃ,
     );
 
@@ -69,6 +69,11 @@ mod ඞ {
     );
 
     use ::never_say_never::Never as ǃ;
+
+    pub use ::higher_kinded_types_proc_macros::map_lifetime;
+
+    pub trait IdentityIgnoring<X : ?Sized> { type ItSelf; }
+    impl<X : ?Sized> IdentityIgnoring<X> for () { type ItSelf = Self; }
 }
 
 

@@ -114,3 +114,86 @@ macro_rules! dispatch {($_:tt
     pub use ඞForLt as ForLt;
 )}
 use dispatch;
+
+/// <-- rust-analyzer nudge
+/// ```rust ,ignore
+/// ඞForLtWF![];
+/// ``` -->
+#[macro_export] #[doc(hidden)] /** Not part of the public API */
+macro_rules! ඞForLtWF {
+    (
+        <$lt:lifetime> = $T:ty $(,)?
+    ) => (
+        $crate::ඞ::ForLt<
+            dyn for<$lt> $crate::advanced::WithLifetime<$lt, Of = $T>,
+            <() as $crate::ඞ::IdentityIgnoring<
+                $crate::ඞ::map_lifetime![$lt => 'static in $T]
+            >>::ItSelf
+        >
+    );
+
+    (
+        $T:ty $(,)?
+    ) => (
+        $crate::ඞ::ForLt<
+            dyn for<'ඞ/*'*/> $crate::advanced::WithLifetime<'ඞ/*'*/,
+                Of = $crate::ඞ::map_lifetime!['_ => 'ඞ/*'*/ in $T],
+            >,
+            <() as $crate::ඞ::IdentityIgnoring<
+                $crate::ඞ::map_lifetime!['_ => 'static in $T]
+            >>::ItSelf,
+        >
+    );
+}
+
+#[doc(inline)]
+pub use ඞForLtWF as ForLtWF;
+
+#[test]
+fn soundness_test() {
+    let local = String::from("…");
+    let _: &'static str = demo(&local);
+
+    fn demo<'r>(r: &'r str) -> &'static str {
+     // drop(None::<ForLtWF![&&'r i32]>);
+     // drop(None::<ForLtWF![& &'r i32]>);
+     // drop(None::<ForLtWF![&'_ &'r i32]>);
+     // drop(None::<ForLtWF![<'any> = &'any &'r ()]>);
+
+        let local = String::from("…");
+        let _: &'static str = demo2::<ForLtWF![<'any> = &'any &'_ ()]>(&local);
+
+        let _: &'static str = demo2::<ForLt![<'any> = &'any &'r ()]>(r);
+     // let _: &'static str = demo2::<ForLtWF![<'any> = &'any &'r ()]>(b);
+
+        let s: &'static str = demo3::<ForLtWF![<'any> = &'static &'any ()]>(r);
+        s
+    }
+
+    trait Outlives<'a, 'b> : Sized {
+        fn outlives<T : ?Sized>(_: [Self; 0], r: &'a T) -> &'b T;
+    }
+    impl<'a, 'b> Outlives<'a, 'b> for &'b &'a () {
+        fn outlives<T : ?Sized>(_: [Self; 0], r: &'a T) -> &'b T { r }
+    }
+
+    fn demo2<'r, T : crate::ForLt>(
+        r: &'r str,
+    ) -> &'static str
+    where
+    
+        for<'any> <T as crate::ForLt>::Of<'any> : Outlives<'r, 'any>,
+    {
+        <T::Of<'static> as Outlives<'r, 'static>>::outlives([], r)
+    }
+
+    fn demo3<'r, 'b, T : crate::ForLt>(
+        r: &'r str,
+    ) -> &'static str
+    where
+        // for 1.76.0 test; TODO: put inline bounds back.
+        for<'any> <T as crate::ForLt>::Of<'any> : Outlives<'any, 'static>,
+    {
+        <T::Of<'r> as Outlives<'r, 'static>>::outlives([], r)
+    }
+}

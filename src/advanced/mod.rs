@@ -221,7 +221,9 @@ trait ForLifetimeMaybeUnsized : crate::seal::WithLifetimeForAny {
 /// [`ForLt`]: trait@crate::ForLt
 impl<T : ?Sized> ForLifetime for T
 where
-    Self : for<'any> WithLifetime<'any, Of : Sized>,
+    // for 1.76.0 test; TODO: put inline bounds back.
+    Self : for<'any> WithLifetime<'any>,// , Of : Sized>,
+    for<'any> <Self as WithLifetime<'any>>::Of : Sized,
 {
     type Of<'lt> = <Self as WithLifetime<'lt>>::Of;
 }

@@ -1,0 +1,18 @@
+[lib]
+proc-macro = true
+path = "mod.rs"
+
+[package]
+name = "higher-kinded-types-proc-macros"
+version = "0.1.0"
+edition = "2021" # for 1.76.0 test; TODO: put 2024 back.
+
+[features]
+debug-macros = []
+
+[dependencies]
+proc-macro2 = "1.0.2"
+quote = "1.0.14"
+syn.version = "3"
+syn.default-features = false
+syn.features = ["parsing", "printing"]
